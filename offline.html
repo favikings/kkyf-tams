@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offline - KKYF Fellowship</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#00BD06">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
+        <!-- SVG Icon: Wifi Off -->
+        <div class="mb-6 flex justify-center">
+            <div class="bg-slate-100 p-4 rounded-full">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-slate-400" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M3 3l18 18M12.44 12.44A5.002 5.002 0 0112 17a5 5 0 01-4-9M16.24 7.76a9 9 0 014.76 4.76M5.636 5.636a9 9 0 0112.728 0M1 1l22 22" />
+                </svg>
+            </div>
+        </div>
+
+        <h1 class="text-2xl font-bold text-slate-900 mb-2 font-sans">You are Offline</h1>
+        <p class="text-slate-600 mb-6 font-inter">
+            It looks like you've lost your internet connection.
+            Check your network and try again.
+        </p>
+
+        <button onclick="window.location.reload()"
+            class="w-full bg-[#00BD06] hover:bg-[#009605] text-white font-medium py-3 px-4 rounded-full transition-colors shadow-lg shadow-green-500/20 active:scale-95">
+            Try Again
+        </button>
+    </div>
+</body>
+
+</html>

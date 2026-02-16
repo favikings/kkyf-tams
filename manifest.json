@@ -1,0 +1,21 @@
+{
+  "name": "KKYF Fellowship",
+  "short_name": "KKYF TAMS",
+  "start_url": "./index.php",
+  "display": "standalone",
+  "background_color": "#F8FAFC",
+  "theme_color": "#00BD06",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "./assets/img/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "./assets/img/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ]
+}

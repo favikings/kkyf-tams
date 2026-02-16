@@ -1,0 +1,36 @@
+name: Deploy to cPanel (FTP)
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  web-deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get latest code
+        uses: actions/checkout@v4
+      
+      - name: Sync files
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          server-dir: /public_html/ # Change if your app is in a subfolder like /public_html/kkyf/
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/.github*/**
+            README.md
+            deployment_guide.md
+            *.sql
+            task.md
+            prd.md
+            tech_specs.md
+            logic_mapper.md
+            implementation_plan.md
+            design_system.md
+            briefs/**
