@@ -189,6 +189,10 @@ try {
     <!-- Alert Container -->
     <div id="stitch-alert-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
+    <!-- Add SweetAlert2 CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="assets/js/stitch_alerts.js"></script>
+
     <script>
         function togglePassword(inputId, iconId) {
             const input = document.getElementById(inputId);
@@ -219,14 +223,24 @@ try {
                 const data = await res.json();
 
                 if (data.success) {
-                    await StitchAlert.showSuccess('Welcome!', 'Account created successfully. Please login.');
-                    window.location.href = 'login.php';
+                    // Success!
+                    if (typeof StitchAlert !== 'undefined') {
+                        await StitchAlert.showSuccess('Welcome!', 'Account created successfully. Please login.');
+                    } else {
+                        alert('Account created successfully. Please login.');
+                    }
+                    // Robust Redirect
+                    window.location.assign('login.php');
                 } else {
-                    StitchAlert.showError('Registration Failed', data.error);
+                    if (typeof StitchAlert !== 'undefined') {
+                        StitchAlert.showError('Registration Failed', data.error);
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
                 }
             } catch (err) {
                 console.error(err);
-                StitchAlert.showError('System Error', 'Could not connect to server.');
+                alert('System Error: Could not connect to server.');
             } finally {
                 btn.innerText = originalText;
                 btn.disabled = false;
