@@ -24,7 +24,7 @@ if ($isLocal) {
 
     // Root domain usually needs empty string, or / if preferred.
     // If installed in a subfolder online, change this.
-    define('BASE_PATH', '');
+    define('BASE_PATH', '/kkyftams');
 }
 
 try {
