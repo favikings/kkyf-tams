@@ -225,12 +225,16 @@ try {
                 if (data.success) {
                     // Success!
                     if (typeof StitchAlert !== 'undefined') {
-                        await StitchAlert.showSuccess('Welcome!', 'Account created successfully. Please login.');
+                        await StitchAlert.showSuccess('Welcome!', 'Account created! Redirecting to dashboard...');
                     } else {
-                        alert('Account created successfully. Please login.');
+                        alert('Account created! Redirecting to dashboard...');
                     }
-                    // Robust Redirect
-                    window.location.assign('login.php');
+                    // Robust Redirect to Dashboard (Auto-Login)
+                    if (data.redirect_url) {
+                        window.location.assign(data.redirect_url);
+                    } else {
+                        window.location.assign('login.php'); // Fallback
+                    }
                 } else {
                     if (typeof StitchAlert !== 'undefined') {
                         StitchAlert.showError('Registration Failed', data.error);

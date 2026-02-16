@@ -64,7 +64,33 @@ try {
     ");
     $stmtAudit->execute(["New Tent Admin ($username) registered for Tent ID $tentId"]);
 
-    echo json_encode(['success' => true, 'message' => 'Account created successfully']);
+    // 6. Auto-Login Logic
+    // Fetch Tent Name for Session
+    $stmtTent = $pdo->prepare("SELECT Tent_Name FROM Tents WHERE Tent_ID = ?");
+    $stmtTent->execute([$tentId]);
+    $tentName = $stmtTent->fetchColumn();
+
+    // Start Session
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+
+    $_SESSION['user_id'] = $newId;
+    $_SESSION['username'] = $username;
+    $_SESSION['role'] = $role;
+    $_SESSION['assigned_tent_id'] = $tentId;
+    $_SESSION['tent_name'] = $tentName;
+
+    // Determine Redirect URL
+    // Since this is a new Tent Admin, they go to Tent Dashboard
+    // We use BASE_PATH constant if available, otherwise relative path
+    $redirectUrl = (defined('BASE_PATH') ? BASE_PATH : '') . '/tent/dashboard.php';
+
+    echo json_encode([
+        'success' => true,
+        'message' => 'Account created successfully',
+        'redirect_url' => $redirectUrl
+    ]);
 
 } catch (Exception $e) {
     echo json_encode(['success' => false, 'error' => $e->getMessage()]);
