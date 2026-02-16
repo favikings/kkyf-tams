@@ -18,9 +18,9 @@ if ($isLocal) {
     // --- PRODUCTION (cPanel) ---
     // FILL THESE IN WITH YOUR CPANEL DETAILS
     define('DB_HOST', 'localhost');
-    define('DB_NAME', 'YOUR_CPANEL_DB_NAME');
-    define('DB_USER', 'YOUR_CPANEL_DB_USER');
-    define('DB_PASS', 'YOUR_CPANEL_DB_PASS');
+    define('DB_NAME', 'youtewrv_kkyf_tams');
+    define('DB_USER', 'youtewrv_kkyf_tams_admin');
+    define('DB_PASS', '!kkyf_tams_admin!');
 
     // Root domain usually needs empty string, or / if preferred.
     // If installed in a subfolder online, change this.
