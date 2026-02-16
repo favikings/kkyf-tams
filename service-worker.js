@@ -1,8 +1,7 @@
-const CACHE_NAME = 'kkyf-tams-v1';
 const ASSETS_TO_CACHE = [
-  '/index.php',
-  '/offline.html',
-  '/manifest.json'
+  './index.php',
+  './offline.html',
+  './manifest.json'
   // Add other CSS/JS files here as they are created
 ];
 
@@ -40,13 +39,13 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     fetch(event.request)
       .catch(() => {
-          return caches.open(CACHE_NAME)
-              .then((cache) => {
-                  return cache.match(event.request)
-                      .then((matching) => {
-                          return matching || cache.match('/offline.html');
-                      });
+        return caches.open(CACHE_NAME)
+          .then((cache) => {
+            return cache.match(event.request)
+              .then((matching) => {
+                return matching || cache.match('/offline.html');
               });
+          });
       })
   );
 });
