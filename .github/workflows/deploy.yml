@@ -19,7 +19,7 @@ jobs:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          server-dir: /public_html/ # Change if your app is in a subfolder like /public_html/kkyf/
+          server-dir: / # Changed to root because your FTP user is likely already inside the target folder
           exclude: |
             **/.git*
             **/.git*/**
