@@ -162,7 +162,7 @@ require_once 'includes/db_connect.php';
 
         <!-- Link to Public Attendance (If applicable) -->
         <div class="mt-8 text-center">
-            <a href="attendance.php"
+            <a href="checkin.php"
                 class="inline-flex items-center gap-2 text-slate-500 hover:text-primary font-semibold transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

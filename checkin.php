@@ -62,19 +62,24 @@ require_once 'includes/db_connect.php';
     <div class="relative z-10 flex-1 px-4 pt-44 pb-12 sm:max-w-md md:max-w-lg mx-auto w-full">
 
         <!-- Check-in Card -->
-        <div
-            class="bg-white rounded-[24px] shadow-sm border border-slate-100 p-6 sm:p-8 relative overflow-hidden min-h-[250px]">
+        <div id="checkin-container"
+            class="bg-white rounded-[24px] shadow-sm border border-slate-100 p-6 sm:p-8 relative overflow-hidden transition-all duration-300">
 
             <!-- STEP 1: Identify -->
-            <div id="step-1"
-                class="transition-all duration-500 absolute inset-0 p-6 sm:p-8 flex flex-col justify-center bg-white">
+            <div id="step-1" class="transition-all duration-500 w-full flex flex-col justify-center bg-white">
                 <form id="identifyForm" class="space-y-4 w-full">
-                    <div>
+                    <div class="relative">
                         <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5 pl-1">Name
                             or Phone Number</label>
-                        <input type="text" id="identifier" required placeholder="John Doe or 0800..."
+                        <input type="text" id="identifier" required placeholder="John Doe or 0800..." autocomplete="off"
                             class="w-full px-4 py-3.5 bg-slate-50 border-transparent focus:bg-white focus:ring-2 focus:ring-primary rounded-xl transition-all font-semibold text-slate-900 placeholder-slate-400">
+
+                        <!-- Autocomplete Dropdown -->
+                        <ul id="autocomplete-results"
+                            class="hidden absolute left-0 right-0 top-full mt-2 bg-white rounded-xl shadow-lg border border-slate-100 max-h-60 overflow-y-auto z-50">
+                        </ul>
                     </div>
+                    <!-- Find Me button can stay as a fallback, but we'll mostly rely on clicking the dropdown -->
                     <button type="submit" id="findBtn"
                         class="w-full bg-slate-900 hover:bg-slate-800 text-white py-4 rounded-[16px] font-bold text-lg shadow-md active:scale-[0.98] transition-all flex justify-center items-center gap-2">
                         <span>Find Me</span>
@@ -88,8 +93,7 @@ require_once 'includes/db_connect.php';
             </div>
 
             <!-- STEP 2: Confirm -->
-            <div id="step-2"
-                class="transition-all duration-500 absolute inset-0 p-6 sm:p-8 flex flex-col justify-center bg-white translate-x-full">
+            <div id="step-2" class="hidden transition-all duration-500 w-full flex-col justify-center bg-white">
                 <div class="text-center w-full">
                     <div
                         class="mx-auto w-16 h-16 bg-green-50 text-primary rounded-full flex items-center justify-center mb-4">
@@ -163,11 +167,75 @@ require_once 'includes/db_connect.php';
         const confirmBtn = document.getElementById('confirmBtn');
         const cancelBtn = document.getElementById('cancelBtn');
 
-        // Step 1: Identify Member
+        // Autocomplete Logic
+        const autocompleteResults = document.getElementById('autocomplete-results');
+        let debounceTimer;
+
+        identifierInput.addEventListener('input', (e) => {
+            const query = e.target.value.trim();
+            clearTimeout(debounceTimer);
+
+            if (query.length < 2) {
+                autocompleteResults.classList.add('hidden');
+                return;
+            }
+
+            debounceTimer = setTimeout(() => {
+                fetchMembers(query);
+            }, 300);
+        });
+
+        // Hide dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!identifierInput.contains(e.target) && !autocompleteResults.contains(e.target)) {
+                autocompleteResults.classList.add('hidden');
+            }
+        });
+
+        async function fetchMembers(identifier) {
+            try {
+                const res = await fetch('api/public_verify_member.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ identifier })
+                });
+                const data = await res.json();
+
+                autocompleteResults.innerHTML = '';
+
+                if (data.success && data.members.length > 0) {
+                    data.members.forEach(member => {
+                        const li = document.createElement('li');
+                        li.className = 'px-4 py-3 hover:bg-slate-50 cursor-pointer border-b border-slate-50 last:border-0 flex items-center justify-between transition-colors';
+                        li.innerHTML = `
+                            <div>
+                                <div class="font-bold text-slate-900">${member.Full_Name}</div>
+                                <div class="text-xs font-medium text-slate-500">${member.Tent_Name || 'Unknown Tent'}</div>
+                            </div>
+                            <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                        `;
+                        li.addEventListener('click', () => {
+                            currentMember = member;
+                            autocompleteResults.classList.add('hidden');
+                            showStep2(currentMember);
+                        });
+                        autocompleteResults.appendChild(li);
+                    });
+                    autocompleteResults.classList.remove('hidden');
+                } else {
+                    autocompleteResults.innerHTML = `<li class="px-4 py-3 text-sm text-slate-500 text-center">No member found.</li>`;
+                    autocompleteResults.classList.remove('hidden');
+                }
+            } catch (err) {
+                console.error("Autocomplete error:", err);
+            }
+        }
+
+        // Step 1: Identify Member (Fallback if they press Enter / Click Button)
         identifyForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const identifier = identifierInput.value.trim();
-            if (!identifier) return;
+            if (identifier.length < 2) return;
 
             const originalText = findBtn.innerHTML;
             findBtn.innerHTML = `<svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> <span>Searching...</span>`;
@@ -181,8 +249,10 @@ require_once 'includes/db_connect.php';
                 });
                 const data = await res.json();
 
-                if (data.success) {
-                    currentMember = data.member;
+                if (data.success && data.members.length > 0) {
+                    // Just take the first one if they force submit
+                    currentMember = data.members[0];
+                    autocompleteResults.classList.add('hidden');
                     showStep2(currentMember);
                 } else {
                     showAlert('Member Not Found', data.message || 'Check spelling or try registering.', 'error');
@@ -200,20 +270,33 @@ require_once 'includes/db_connect.php';
             document.getElementById('confirm-name').textContent = member.Full_Name;
             document.getElementById('confirm-tent').textContent = member.Tent_Name || 'Unknown Tent';
 
-            step1.classList.add('-translate-x-full');
-            step2.classList.remove('translate-x-full');
-            step2.classList.add('translate-x-0');
+            step1.classList.add('hidden');
+            step1.classList.remove('flex');
+
+            step2.classList.remove('hidden');
+            step2.classList.add('flex');
+
+            // Trigger reflow for animation
+            void step2.offsetWidth;
+            step2.classList.remove('opacity-0', 'translate-y-4');
         }
 
         function cancelStep2() {
             currentMember = null;
             identifierInput.value = '';
 
-            step1.classList.remove('-translate-x-full');
-            step2.classList.remove('translate-x-0');
-            step2.classList.add('translate-x-full');
+            step2.classList.add('opacity-0', 'translate-y-4');
 
-            identifierInput.focus();
+            // Wait for animation to finish then hide
+            setTimeout(() => {
+                step2.classList.add('hidden');
+                step2.classList.remove('flex');
+
+                step1.classList.remove('hidden');
+                step1.classList.add('flex');
+
+                identifierInput.focus();
+            }, 300); // match duration
         }
 
         cancelBtn.addEventListener('click', cancelStep2);
