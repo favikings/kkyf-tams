@@ -236,11 +236,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     </button>
                 </form>
                 <!-- Footer -->
-                <div class="mt-10 text-center">
+                <div class="mt-8 text-center space-y-4">
                     <p class="text-sm font-medium text-slate-500 dark:text-slate-400">
-                        Don't have an account?
-                        <a class="ml-1 font-bold text-primary hover:underline" href="register.php">Create Account</a>
+                        Admin Portal
                     </p>
+                    <div class="pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col items-center gap-3">
+                        <a class="text-sm font-bold text-primary hover:underline flex items-center justify-center gap-2"
+                            href="checkin.php">
+                            <span class="material-symbols-outlined text-[18px]">how_to_reg</span> Public Attendance
+                        </a>
+                        <a class="text-sm font-medium text-slate-500 hover:text-primary transition-colors flex items-center justify-center gap-2"
+                            href="join.php">
+                            <span class="material-symbols-outlined text-[18px]">group_add</span> New Member Registration
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
