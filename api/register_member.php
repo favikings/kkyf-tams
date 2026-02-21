@@ -37,6 +37,26 @@ if (empty($fullName) || empty($tentId)) {
 }
 
 try {
+    // 2.5 Duplicate Check
+    // Check for Name within the same Tent
+    $stmtCheckName = $pdo->prepare("SELECT COUNT(*) FROM Members WHERE Full_Name = ? AND Current_Tent_ID = ?");
+    $stmtCheckName->execute([$fullName, $tentId]);
+    if ($stmtCheckName->fetchColumn() > 0) {
+        echo json_encode(['success' => false, 'error' => 'A member with this name already exists in this tent.']);
+        exit;
+    }
+
+    // Check for Phone Number (if provided)
+    if (!empty($phone)) {
+        $stmtCheckPhone = $pdo->prepare("SELECT Full_Name FROM Members WHERE Phone = ?");
+        $stmtCheckPhone->execute([$phone]);
+        $existingMember = $stmtCheckPhone->fetchColumn();
+        if ($existingMember) {
+            echo json_encode(['success' => false, 'error' => "This phone number is already registered to $existingMember."]);
+            exit;
+        }
+    }
+
     // 3. Insert Logic
     // Create new Member UUID
     $uuid = bin2hex(random_bytes(16)); // Simple generation or UUID v4

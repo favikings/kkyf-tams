@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS Tents (
 CREATE TABLE IF NOT EXISTS Admin_User (
     ID INT AUTO_INCREMENT PRIMARY KEY, -- Renamed from Admin_ID
     Username VARCHAR(50) NOT NULL UNIQUE,
+    Email VARCHAR(255) UNIQUE, -- Added Phase 8
     Password_Hash VARCHAR(255) NOT NULL,
     Role ENUM('Super Admin', 'Tent Admin') NOT NULL,
     Assigned_Tent_ID INT NULL,
@@ -84,5 +85,15 @@ INSERT IGNORE INTO Tents (Tent_Name) VALUES
 ('Seal of Love');
 
 -- Initial Seed Data: Default Active Session
-INSERT IGNORE INTO Sessions (Session_Name, Start_Date, Is_Active) VALUES 
 ('2026', CURDATE(), 1);
+
+-- 7. Password_Resets (Added Phase 8)
+CREATE TABLE IF NOT EXISTS Password_Resets (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(255) NOT NULL,
+    token VARCHAR(64) NOT NULL,
+    expires_at DATETIME NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX (token),
+    INDEX (email)
+) ENGINE=InnoDB;
