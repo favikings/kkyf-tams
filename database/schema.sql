@@ -42,7 +42,9 @@ CREATE TABLE IF NOT EXISTS Members (
     Address TEXT NULL,
     Current_Tent_ID INT NOT NULL,
     Join_Date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (Current_Tent_ID) REFERENCES Tents(Tent_ID)
+    FOREIGN KEY (Current_Tent_ID) REFERENCES Tents(Tent_ID),
+    UNIQUE KEY unique_phone (Phone),
+    UNIQUE KEY unique_name_tent (Full_Name, Current_Tent_ID)
 ) ENGINE=InnoDB;
 
 -- 5. Attendance_Log (Transactional Data)
