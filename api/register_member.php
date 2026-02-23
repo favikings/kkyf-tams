@@ -62,7 +62,7 @@ try {
     $uuid = bin2hex(random_bytes(16)); // Simple generation or UUID v4
 
     $sql = "
-        INSERT INTO Members (Member_UUID, Full_Name, Status, Current_Tent_ID, School, Phone, DOB, Join_Date)
+        INSERT INTO Members (Member_UUID, Full_Name, Status, Current_Tent_ID, School, Phone, Birthdate, Join_Date)
         VALUES (?, ?, ?, ?, ?, ?, ?, CURDATE())
     ";
 
@@ -88,7 +88,8 @@ try {
         ]
     ]);
 
-} catch (PDOException $e) {
+}
+catch (PDOException $e) {
     error_log("Registration API Error: " . $e->getMessage());
     echo json_encode(['success' => false, 'error' => 'Database error']);
 }

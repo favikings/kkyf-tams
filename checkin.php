@@ -63,7 +63,7 @@ require_once 'includes/db_connect.php';
 
         <!-- Check-in Card -->
         <div id="checkin-container"
-            class="bg-white rounded-[24px] shadow-sm border border-slate-100 p-6 sm:p-8 relative overflow-hidden transition-all duration-300">
+            class="bg-white rounded-[24px] shadow-sm border border-slate-100 p-6 sm:p-8 transition-all duration-300">
 
             <!-- STEP 1: Identify -->
             <div id="step-1" class="transition-all duration-500 w-full flex flex-col justify-center bg-white">

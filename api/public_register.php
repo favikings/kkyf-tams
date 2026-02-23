@@ -39,7 +39,7 @@ try {
     $uuid = bin2hex(random_bytes(16));
 
     $sql = "
-        INSERT INTO Members (Member_UUID, Full_Name, Status, Current_Tent_ID, School, Phone, DOB, Join_Date)
+        INSERT INTO Members (Member_UUID, Full_Name, Status, Current_Tent_ID, School, Phone, Birthdate, Join_Date)
         VALUES (?, ?, ?, ?, ?, ?, ?, CURDATE())
     ";
 
@@ -56,7 +56,8 @@ try {
 
     echo json_encode(['success' => true, 'message' => 'Welcome to the family!']);
 
-} catch (PDOException $e) {
+}
+catch (PDOException $e) {
     error_log("Public Register API Error: " . $e->getMessage());
     echo json_encode(['success' => false, 'error' => 'Database error']);
 }
