@@ -2,6 +2,14 @@
 // api/auth_ops.php
 require_once __DIR__ . '/../includes/db_connect.php';
 
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception as PHPMailerException;
+
+// Only require if PHPMailer is downloaded into includes folder
+require_once __DIR__ . '/../includes/PHPMailer/Exception.php';
+require_once __DIR__ . '/../includes/PHPMailer/PHPMailer.php';
+require_once __DIR__ . '/../includes/PHPMailer/SMTP.php';
+
 header('Content-Type: application/json');
 
 // Helper to send JSON response
@@ -48,11 +56,56 @@ try {
         $stmtInsert = $pdo->prepare("INSERT INTO Password_Resets (email, token, expires_at) VALUES (?, ?, ?)");
         $stmtInsert->execute([$email, $token, $expiresAt]);
 
-        // 4. Simulate Email (Return Link)
-        // In production, send email here.
-        $resetLink = BASE_PATH . "/reset_password.php?token=" . $token;
+        // 4. Send Email
+        $resetLink = "https://" . $_SERVER['HTTP_HOST'] . BASE_PATH . "/reset_password.php?token=" . $token;
 
-        sendJson(true, ['message' => 'Reset link generated', 'reset_link' => $resetLink]);
+        if (SMTP_PASS === 'YOUR_EMAIL_PASSWORD_HERE') {
+            // Fallback for Development (Or if user forgets to set password)
+            sendJson(true, ['message' => 'Reset link generated (Simulation Mode)', 'reset_link' => $resetLink]);
+        }
+
+        $mail = new PHPMailer(true);
+        try {
+            // Server settings
+            $mail->isSMTP();
+            $mail->Host       = SMTP_HOST;
+            $mail->SMTPAuth   = true;
+            $mail->Username   = SMTP_USER;
+            $mail->Password   = SMTP_PASS;
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS; // Enable implicit TLS encryption
+            $mail->Port       = SMTP_PORT;
+
+            // Recipients
+            $mail->setFrom(SMTP_FROM_EMAIL, SMTP_FROM_NAME);
+            $mail->addAddress($email);
+
+            // Content
+            $mail->isHTML(true);
+            $mail->Subject = 'KKYF Tent Manager - Password Reset Request';
+            
+            $body = "
+                <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
+                    <h2 style='color: #00BD06;'>Password Reset Request</h2>
+                    <p>Hello,</p>
+                    <p>You have requested to reset your password for the KKYF Tent Manager system.</p>
+                    <p>Please click the button below to set a new password:</p>
+                    <div style='text-align: center; margin: 30px 0;'>
+                        <a href='{$resetLink}' style='background-color: #00BD06; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;'>Reset Password</a>
+                    </div>
+                    <p>If the button doesn't work, copy and paste this link into your browser:</p>
+                    <p><a href='{$resetLink}'>{$resetLink}</a></p>
+                    <p>This link will expire in 1 hour.</p>
+                    <p>If you did not request this, please ignore this email.</p>
+                </div>
+            ";
+            $mail->Body = $body;
+
+            $mail->send();
+            sendJson(true, ['message' => 'Reset link sent to your email. Check your inbox.']);
+        } catch (PHPMailerException $e) {
+            error_log("Email sending failed. Mailer Error: {$mail->ErrorInfo}");
+            throw new Exception("Could not send email. Please contact support.");
+        }
 
     } elseif ($action === 'reset_password') {
         $token = $_POST['token'] ?? '';

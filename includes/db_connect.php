@@ -12,6 +12,14 @@ if ($isLocal) {
     define('DB_USER', 'root');
     define('DB_PASS', '');
 
+    // Email Configuration (Local Testing - Not active usually)
+    define('SMTP_HOST', 'mail.kkyfglobal.org'); 
+    define('SMTP_PORT', 465);
+    define('SMTP_USER', 'noreply@kkyfglobal.org');
+    define('SMTP_PASS', 'YOUR_EMAIL_PASSWORD_HERE');
+    define('SMTP_FROM_EMAIL', 'noreply@kkyfglobal.org');
+    define('SMTP_FROM_NAME', 'KKYF Tent Manager');
+
     // Subfolder on XAMPP (e.g., localhost/kkyf-tams)
     define('BASE_PATH', '/kkyf-tams');
 } else {
@@ -21,6 +29,14 @@ if ($isLocal) {
     define('DB_NAME', 'youtewrv_kkyf_tams');
     define('DB_USER', 'youtewrv_kkyf_tams_admin');
     define('DB_PASS', '!kkyf_tams_admin!');
+
+    // Email Configuration
+    define('SMTP_HOST', 'mail.kkyfglobal.org'); 
+    define('SMTP_PORT', 465); // Standard SSL Port for cPanel
+    define('SMTP_USER', 'noreply@kkyfglobal.org');
+    define('SMTP_PASS', 'YOUR_EMAIL_PASSWORD_HERE');
+    define('SMTP_FROM_EMAIL', 'noreply@kkyfglobal.org');
+    define('SMTP_FROM_NAME', 'KKYF Tent Manager');
 
     // Root domain usually needs empty string, or / if preferred.
     // If installed in a subfolder online, change this.

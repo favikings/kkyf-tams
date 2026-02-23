@@ -48,6 +48,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
 
+        // Duplicate checks
+        $stmtCheckName = $pdo->prepare("SELECT COUNT(*) FROM Members WHERE Full_Name = ? AND Current_Tent_ID = ?");
+        $stmtCheckName->execute([$fullName, $tentId]);
+        if ($stmtCheckName->fetchColumn() > 0) {
+            echo json_encode(['success' => false, 'error' => 'A member with this name already exists in this tent.']);
+            exit;
+        }
+
+        if (!empty($phone)) {
+            $stmtCheckPhone = $pdo->prepare("SELECT Full_Name FROM Members WHERE Phone = ?");
+            $stmtCheckPhone->execute([$phone]);
+            $existingMember = $stmtCheckPhone->fetchColumn();
+            if ($existingMember) {
+                echo json_encode(['success' => false, 'error' => "This phone number is already registered to $existingMember."]);
+                exit;
+            }
+        }
+
         // Generate UUID in PHP to ensure we have it for both tables
         $uuid = vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex(random_bytes(16)), 4));
 
