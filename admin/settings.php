@@ -6,6 +6,8 @@ require_once '../includes/auth_check.php';
 // Auth: Super Admin required for settings
 checkAuth('Super Admin');
 
+$pageTitle = 'Settings';
+
 // Fetch current active session
 $stmt = $pdo->query("SELECT Session_Name FROM Sessions WHERE Is_Active = 1 LIMIT 1");
 $activeSession = $stmt->fetchColumn() ?: "None";

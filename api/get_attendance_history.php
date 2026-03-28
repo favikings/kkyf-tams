@@ -10,8 +10,19 @@ header('Content-Type: application/json');
 $role = $_SESSION['role'] ?? '';
 $tentId = $_SESSION['assigned_tent_id'] ?? null;
 
-if ($role === 'Super Admin' && isset($_GET['tent_id'])) {
-    $tentId = $_GET['tent_id'];
+if ($role === 'Super Admin') {
+    if (isset($_GET['tent_id'])) {
+        $tentId = $_GET['tent_id'];
+    } else {
+        // Super Admin with no tent_id specified - require one
+        echo json_encode(['success' => false, 'error' => 'Tent ID required for Super Admin']);
+        exit;
+    }
+}
+
+if (!$tentId) {
+    echo json_encode(['success' => false, 'error' => 'No Tent Assigned']);
+    exit;
 }
 $mode = $_GET['mode'] ?? 'summary'; // 'summary' or 'detail'
 $date = $_GET['date'] ?? null;

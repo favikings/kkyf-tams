@@ -1,3 +1,5 @@
+const CACHE_NAME = 'kkyf-tams-v1';
+
 const ASSETS_TO_CACHE = [
   './index.php',
   './offline.html',

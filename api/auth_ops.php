@@ -33,19 +33,15 @@ try {
             throw new Exception("Invalid email address.");
         }
 
-        // 1. Check if email exists
+        // 1. Check if email exists (but don't reveal result to prevent user enumeration)
         $stmt = $pdo->prepare("SELECT ID FROM Admin_User WHERE Email = ?");
         $stmt->execute([$email]);
-        if (!$stmt->fetch()) {
-            // Security: Don't reveal if email exists, just pretend success
-            // But for this internal tool, maybe we want to know? 
-            // Let's return success but no link.
-            // Actually, for user experience in this closed system, let's say "Email not found" if that's preferred, 
-            // but standard practice is "If that email exists...".
-            // Let's stick to standard practice: Pretend success.
-            // BUT, since we need to SIMULATE the link, we must know if it succeeded to return the link.
-            // So we WILL throw error if not found, for now.
-            throw new Exception("Email not found in our records.");
+        $emailExists = $stmt->fetch();
+
+        // Always show generic message to prevent user enumeration
+        if (!$emailExists) {
+            sendJson(true, ['message' => 'If that email exists, a reset link has been sent.']);
+            exit;
         }
 
         // 2. Generate Token
@@ -59,9 +55,10 @@ try {
         // 4. Send Email
         $resetLink = "https://" . $_SERVER['HTTP_HOST'] . BASE_PATH . "/reset_password.php?token=" . $token;
 
-        if (SMTP_PASS === 'YOUR_EMAIL_PASSWORD_HERE') {
-            // Fallback for Development (Or if user forgets to set password)
-            sendJson(true, ['message' => 'Reset link generated (Simulation Mode)', 'reset_link' => $resetLink]);
+        if (SMTP_PASS === 'YOUR_EMAIL_PASSWORD_HERE' || empty(SMTP_PASS)) {
+            // Fallback for Development - Log link server-side, don't expose in response
+            error_log("PASSWORD RESET LINK (SIMULATION): $resetLink");
+            sendJson(true, ['message' => 'Reset link generated (Simulation Mode - check server logs)']);
         }
 
         $mail = new PHPMailer(true);

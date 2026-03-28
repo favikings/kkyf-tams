@@ -1,0 +1,19 @@
+# Environment Variables (contains sensitive credentials)
+.env
+
+# System Files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Uploads
+uploads/*
+
+# Backups
+backups/
+
+# Logs
+*.log

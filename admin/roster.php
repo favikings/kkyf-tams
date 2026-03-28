@@ -6,6 +6,8 @@ require_once '../includes/auth_check.php';
 // Enforce Role
 checkAuth('Super Admin');
 
+$pageTitle = 'Master Roster';
+
 // --- Backend Logic ---
 
 // Search Logic
@@ -73,17 +75,6 @@ require_once '../includes/header.php';
                     <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                 </svg>
             </form>
-
-            <a href="../api/export_roster.php"
-                class="bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 px-4 py-2 rounded-lg text-sm font-medium shadow-sm transition-colors flex items-center gap-2 flex-shrink-0">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="7 10 12 15 17 10"></polyline>
-                    <line x1="12" y1="15" x2="12" y2="3"></line>
-                </svg>
-                <span class="hidden sm:inline">Export CSV</span>
-            </a>
 
             <a href="<?= BASE_PATH ?>/api/export_roster.php"
                 class="bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-lg text-sm font-medium shadow-sm transition-colors flex items-center gap-2 flex-shrink-0">
@@ -481,11 +472,10 @@ require_once '../includes/header.php';
 
     async function handleEditSubmit(e) {
         e.preventDefault();
-        const formData = new FormData(form);
         const btn = document.getElementById('saveBtn');
         const originalText = btn.innerText;
 
-        // Stitch DOB
+        // Stitch DOB FIRST (before FormData capture)
         const m = document.getElementById('edit_dob_month').value;
         const d = document.getElementById('edit_dob_day').value;
         if (m && d) {
@@ -493,6 +483,9 @@ require_once '../includes/header.php';
         } else {
             document.getElementById('edit_dob_hidden').value = '';
         }
+
+        // NOW create FormData (after DOB is set)
+        const formData = new FormData(form);
 
         btn.innerText = 'Processing...';
         btn.disabled = true;

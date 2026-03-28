@@ -5,6 +5,8 @@ require_once '../includes/auth_check.php';
 
 checkAuth('Super Admin');
 
+$pageTitle = 'Reports';
+
 require_once '../includes/header.php';
 ?>
 

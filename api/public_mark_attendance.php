@@ -2,7 +2,30 @@
 // api/public_mark_attendance.php
 require_once '../includes/db_connect.php';
 
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 header('Content-Type: application/json');
+
+// Rate Limiting: Max 10 requests per minute per IP
+$ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+$rateKey = 'rate_limit_' . md5($ip);
+$now = time();
+
+if (!isset($_SESSION[$rateKey])) {
+    $_SESSION[$rateKey] = ['count' => 0, 'reset' => $now + 60];
+}
+
+if ($now > $_SESSION[$rateKey]['reset']) {
+    $_SESSION[$rateKey] = ['count' => 0, 'reset' => $now + 60];
+}
+
+if ($_SESSION[$rateKey]['count'] > 10) {
+    echo json_encode(['success' => false, 'error' => 'RATE_LIMITED', 'message' => 'Too many requests. Please try again later.']);
+    exit;
+}
+$_SESSION[$rateKey]['count']++;
 
 $input = json_decode(file_get_contents('php://input'), true);
 
@@ -33,14 +56,20 @@ try {
         exit;
     }
 
-    // 3. Mark Attendance
-    $stmtInsert = $pdo->prepare("
-        INSERT INTO Attendance_Log (Tent_ID, Member_UUID, Session_ID, Attendance_Date, Check_In_Time)
-        VALUES (?, ?, ?, ?, ?)
-    ");
-    $stmtInsert->execute([$tentId, $memberUuid, $sessionId, $date, date('Y-m-d H:i:s')]);
+    // 3. Check if First Timer (no prior attendance records)
+    $stmtHistory = $pdo->prepare("SELECT COUNT(*) FROM Attendance_Log WHERE Member_UUID = ?");
+    $stmtHistory->execute([$memberUuid]);
+    $isFirstTimer = ($stmtHistory->fetchColumn() == 0) ? 1 : 0;
 
-    echo json_encode(['success' => true, 'message' => 'Have a great service!']);
+    // 4. Mark Attendance
+    $stmtInsert = $pdo->prepare("
+        INSERT INTO Attendance_Log (Tent_ID, Member_UUID, Session_ID, Attendance_Date, Check_In_Time, Is_First_Timer)
+        VALUES (?, ?, ?, ?, ?, ?)
+    ");
+    $stmtInsert->execute([$tentId, $memberUuid, $sessionId, $date, date('Y-m-d H:i:s'), $isFirstTimer]);
+
+    $message = $isFirstTimer ? 'Welcome to KKYF! You have been marked as a first timer.' : 'Have a great service!';
+    echo json_encode(['success' => true, 'message' => $message, 'is_first_timer' => $isFirstTimer]);
 
 } catch (PDOException $e) {
     error_log("Mark Attendance API Error: " . $e->getMessage());

@@ -6,6 +6,8 @@ require_once '../includes/auth_check.php';
 // Enforce Role
 checkAuth('Super Admin');
 
+$pageTitle = 'Dashboard';
+
 // --- Backend Logic ---
 
 // 1. Total Members

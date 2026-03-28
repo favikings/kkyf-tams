@@ -4,9 +4,18 @@ require_once __DIR__ . '/../includes/db_connect.php';
 
 header('Content-Type: application/json');
 
-// SECURITY: Define the shared secret code here (or pull from config)
-// For simplicity, we hardcode it now. In production, this should be in an env file.
-define('REGISTRATION_CODE', 'KKYF2026');
+// SECURITY: Load registration code from environment
+$envFile = __DIR__ . '/../../.env';
+if (file_exists($envFile)) {
+    $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        if (strpos(trim($line), '#') === 0) continue;
+        if (strpos($line, '=') === false) continue;
+        list($key, $value) = explode('=', $line, 2);
+        $_ENV[trim($key)] = trim($value);
+    }
+}
+define('REGISTRATION_CODE', $_ENV['REGISTRATION_CODE'] ?? 'KKYF2026');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode(['success' => false, 'error' => 'Invalid request method']);

@@ -15,6 +15,9 @@ function is_active($path, $current_page)
 {
     return basename($path) === $current_page ? 'text-[#00BD06]' : '';
 }
+
+// Page title helper - accepts custom title or derives from filename
+$pageTitle = $pageTitle ?? ucfirst(str_replace(['.php', '_'], ['', ' '], $current_page));
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -22,7 +25,7 @@ function is_active($path, $current_page)
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>KKYF TAMS - Dashboard</title>
+    <title>KKYF TAMS - <?= htmlspecialchars($pageTitle) ?></title>
 
     <!-- PWA Manifest -->
     <link rel="manifest" href="<?= BASE_PATH ?>/manifest.json">

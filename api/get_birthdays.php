@@ -7,8 +7,8 @@ if (session_status() === PHP_SESSION_NONE) {
 
 header('Content-Type: application/json');
 
-// 1. Auth Check (Tent Admin Only)
-if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'Tent Admin') {
+// 1. Auth Check (Tent Admin OR Super Admin)
+if (!isset($_SESSION['role']) || !in_array($_SESSION['role'], ['Tent Admin', 'Super Admin'])) {
     echo json_encode(['success' => false, 'error' => 'Unauthorized']);
     exit;
 }

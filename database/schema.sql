@@ -87,7 +87,7 @@ INSERT IGNORE INTO Tents (Tent_Name) VALUES
 ('Seal of Love');
 
 -- Initial Seed Data: Default Active Session
-('2026', CURDATE(), 1);
+INSERT INTO Sessions (Session_Name, Start_Date, Is_Active) VALUES ('2026', CURDATE(), 1);
 
 -- 7. Password_Resets (Added Phase 8)
 CREATE TABLE IF NOT EXISTS Password_Resets (

@@ -5,6 +5,8 @@ require_once '../includes/auth_check.php';
 
 checkAuth('Tent Admin');
 
+$pageTitle = 'Attendance History';
+
 // Context Logic (Super Admin Impersonation)
 $isSuperAdmin = ($_SESSION['role'] === 'Super Admin');
 $tentId = $_SESSION['assigned_tent_id'] ?? null;
@@ -103,12 +105,15 @@ require_once '../includes/header.php';
             const data = await res.json();
 
             if (data.success && data.data.length > 0) {
-                container.innerHTML = data.data.map(item => `
+                container.innerHTML = data.data.map(item => {
+                    const dateObj = new Date(item.Attendance_Date);
+                    const monthName = dateObj.toLocaleString('default', { month: 'short' }).toUpperCase();
+                    return `
                 <div onclick="openDetail('${item.Attendance_Date}')" class="bg-white p-5 rounded-xl border border-slate-100 shadow-sm hover:shadow-md hover:border-[#00BD06]/30 cursor-pointer transition-all flex items-center justify-between group">
                     <div class="flex items-center gap-4">
                         <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-lg flex flex-col items-center justify-center font-bold text-xs ring-1 ring-blue-100">
-                            <span class="text-[10px] uppercase text-blue-400">FEB</span>
-                            <span class="text-lg leading-none">${new Date(item.Attendance_Date).getDate()}</span>
+                            <span class="text-[10px] uppercase text-blue-400">${monthName}</span>
+                            <span class="text-lg leading-none">${dateObj.getDate()}</span>
                         </div>
                         <div>
                             <h4 class="font-bold text-slate-800 group-hover:text-[#00BD06] transition-colors">Sunday Service</h4>
@@ -120,7 +125,8 @@ require_once '../includes/header.php';
                         <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Attendees</p>
                     </div>
                 </div>
-            `).join('');
+            `;
+                }).join('');
             } else {
                 container.innerHTML = '<p class="text-center text-slate-400 py-10">No history found.</p>';
             }

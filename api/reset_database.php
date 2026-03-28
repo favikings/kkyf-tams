@@ -1,11 +1,13 @@
 <?php
 // api/reset_database.php
 require_once '../includes/db_connect.php';
+require_once '../includes/auth_check.php';
 
-// SECURITY: Hardcoded secret to prevent accidental wipes
-// Usage: api/reset_database.php?secret=KKYF_CLEAN_START_2026
+// SECURITY: Require Super Admin authentication
+checkAuth('Super Admin');
+
+// SECURITY: Additional hardcoded secret for extra protection
 $SECRET = 'KKYF_CLEAN_START_2026';
-
 if (($_GET['secret'] ?? '') !== $SECRET) {
     die("⛔ Access Denied: Invalid Secret Key.");
 }

@@ -6,6 +6,8 @@ require_once '../includes/auth_check.php';
 // Role Check: Tent Admin required (Super Admin allowed via auth_check update)
 checkAuth('Tent Admin');
 
+$pageTitle = 'Tent Dashboard';
+
 // Context Logic
 $isSuperAdmin = ($_SESSION['role'] === 'Super Admin');
 $tentId = null;

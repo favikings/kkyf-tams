@@ -80,30 +80,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmtInsert->execute([$uuid, $fullName, $status, $tentId, $phone, $dob]);
             $memberId = $pdo->lastInsertId();
 
-            // Fetch Active Session
-            $stmtSession = $pdo->query("SELECT Session_ID FROM Sessions WHERE Is_Active = 1 LIMIT 1");
-            $sessionId = $stmtSession->fetchColumn();
-
-            if (!$sessionId) {
-                // Fallback: If no session active, maybe we shouldn't fail the member creation?
-                // But Attendance Log requires it. Let's log a warning and skip attendance or fail.
-                // Decided: Fail to ensure data integrity.
-                throw new Exception("No active session found.");
-            }
-
-            // Auto-Mark as Present (First Timer) - USING UUID
-            $stmtLog = $pdo->prepare("
-                INSERT INTO Attendance_Log (Member_UUID, Tent_ID, Attendance_Date, Session_ID, Is_First_Timer, Check_In_Time)
-                VALUES (?, ?, CURDATE(), ?, 1, NOW())
-            ");
-            $stmtLog->execute([$uuid, $tentId, $sessionId]);
-
             // Audit
             $stmtAudit = $pdo->prepare("INSERT INTO Audit_Log (Admin_ID, Action_Type, Details, IP_Address) VALUES (?, 'CREATE_MEMBER', ?, ?)");
             $stmtAudit->execute([$_SESSION['user_id'], "Created Member $fullName ($status) in Tent $tentId", $_SERVER['REMOTE_ADDR']]);
 
             $pdo->commit();
-            echo json_encode(['success' => true, 'message' => 'Member added and marked present']);
+            echo json_encode(['success' => true, 'message' => 'Member added successfully']);
 
         } catch (Exception $e) {
             $pdo->rollBack();

@@ -5,6 +5,8 @@ require_once '../includes/auth_check.php';
 
 checkAuth('Tent Admin');
 
+$pageTitle = 'Take Attendance';
+
 // Context Logic
 $isSuperAdmin = ($_SESSION['role'] === 'Super Admin');
 $tentId = null;
