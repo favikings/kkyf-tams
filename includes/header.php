@@ -100,6 +100,8 @@ $pageTitle = $pageTitle ?? ucfirst(str_replace(['.php', '_'], ['', ' '], $curren
                         <a href="<?= BASE_PATH ?>/admin/roster.php"
                             class="hover:text-[#00BD06] transition-colors h-12 flex items-center <?= is_active(BASE_PATH . '/admin/roster.php', $current_page) ?: 'text-slate-500' ?>">Master
                             Roster</a>
+                        <a href="<?= BASE_PATH ?>/admin/birthdays.php"
+                            class="hover:text-[#00BD06] transition-colors h-12 flex items-center <?= is_active(BASE_PATH . '/admin/birthdays.php', $current_page) ?: 'text-slate-500' ?>">Birthdays</a>
                         <a href="<?= BASE_PATH ?>/admin/reports.php"
                             class="hover:text-[#00BD06] transition-colors h-12 flex items-center <?= is_active(BASE_PATH . '/admin/reports.php', $current_page) ?: 'text-slate-500' ?>">Reports</a>
                         <a href="<?= BASE_PATH ?>/admin/settings.php"
@@ -113,6 +115,8 @@ $pageTitle = $pageTitle ?? ucfirst(str_replace(['.php', '_'], ['', ' '], $curren
                         <a href="<?= BASE_PATH ?>/tent/members.php"
                             class="hover:text-[#00BD06] transition-colors h-12 flex items-center <?= is_active(BASE_PATH . '/tent/members.php', $current_page) ?: 'text-slate-500' ?>">My
                             Members</a>
+                        <a href="<?= BASE_PATH ?>/tent/birthdays.php"
+                            class="hover:text-[#00BD06] transition-colors h-12 flex items-center <?= is_active(BASE_PATH . '/tent/birthdays.php', $current_page) ?: 'text-slate-500' ?>">Birthdays</a>
                     <?php endif; ?>
                 </div>
 
@@ -168,6 +172,17 @@ $pageTitle = $pageTitle ?? ucfirst(str_replace(['.php', '_'], ['', ' '], $curren
                     <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                 </svg>
                 <span class="text-[10px] font-medium">Roster</span>
+            </a>
+            <a href="<?= BASE_PATH ?>/admin/birthdays.php"
+                class="flex flex-col items-center justify-center gap-1 h-full w-16 <?= is_active(BASE_PATH . '/admin/birthdays.php', $current_page) ?: 'text-slate-400' ?>">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M8 2v4"></path>
+                    <path d="M16 2v4"></path>
+                    <rect width="18" height="18" x="3" y="4" rx="2"></rect>
+                    <path d="M3 10h18"></path>
+                </svg>
+                <span class="text-[10px] font-medium">Birthdays</span>
             </a>
             <a href="<?= BASE_PATH ?>/admin/reports.php"
                 class="flex flex-col items-center justify-center gap-1 h-full w-16 <?= is_active(BASE_PATH . '/admin/reports.php', $current_page) ?: 'text-slate-400' ?>">
@@ -226,6 +241,17 @@ $pageTitle = $pageTitle ?? ucfirst(str_replace(['.php', '_'], ['', ' '], $curren
                     <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                 </svg>
                 <span class="text-[10px] font-medium">Members</span>
+            </a>
+            <a href="<?= BASE_PATH ?>/tent/birthdays.php"
+                class="flex flex-col items-center justify-center gap-1 h-full w-16 <?= is_active(BASE_PATH . '/tent/birthdays.php', $current_page) ?: 'text-slate-400' ?>">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M8 2v4"></path>
+                    <path d="M16 2v4"></path>
+                    <rect width="18" height="18" x="3" y="4" rx="2"></rect>
+                    <path d="M3 10h18"></path>
+                </svg>
+                <span class="text-[10px] font-medium">Birthdays</span>
             </a>
         <?php endif; ?>
     </div>
