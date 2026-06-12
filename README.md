@@ -168,13 +168,13 @@ Run the migration only against a local or staging copy first.
 Dry run:
 
 ```text
-php scripts/migrate_legacy_to_v2.php --dry-run
+php database/legacy_migration_check.php --dry-run
 ```
 
 Write mode after validation:
 
 ```text
-php scripts/migrate_legacy_to_v2.php --write
+php database/migrate_legacy_to_v2.php --write
 ```
 
 ## Safety Notes

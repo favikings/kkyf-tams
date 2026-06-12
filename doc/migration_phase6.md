@@ -52,7 +52,7 @@ Then run all v2 migrations on the same staging database.
 ## Dry Run
 
 ```powershell
-php scripts/migrate_legacy_to_v2.php --dry-run
+php database/legacy_migration_check.php --dry-run
 ```
 
 ## Write Mode
@@ -60,7 +60,7 @@ php scripts/migrate_legacy_to_v2.php --dry-run
 Only after dry-run and validation:
 
 ```powershell
-php scripts/migrate_legacy_to_v2.php --write
+php database/migrate_legacy_to_v2.php --write
 ```
 
 ## Validation Checklist
@@ -71,4 +71,3 @@ php scripts/migrate_legacy_to_v2.php --write
 - Legacy attendance count maps into v2 attendance, allowing skipped duplicates.
 - Tent Admin users have assigned v2 `tent_id` values where source assignments exist.
 - `migration_logs` contains no unresolved `error` rows.
-
