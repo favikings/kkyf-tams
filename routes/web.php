@@ -1,0 +1,33 @@
+<?php
+
+use App\Controllers\HomeController;
+use App\Controllers\AuthController;
+use App\Controllers\AttendanceController;
+use App\Controllers\DashboardController;
+use App\Controllers\MemberController;
+use App\Controllers\TentController;
+use App\Core\Router;
+
+/** @var Router $router */
+$router->get('/', [HomeController::class, 'index']);
+$router->get('/login', [AuthController::class, 'showLogin']);
+$router->post('/login', [AuthController::class, 'login']);
+$router->post('/logout', [AuthController::class, 'logout']);
+$router->get('/dashboard', [DashboardController::class, 'index']);
+$router->get('/admin', [DashboardController::class, 'admin']);
+$router->get('/unauthorized', [DashboardController::class, 'unauthorized']);
+$router->get('/tents', [TentController::class, 'index']);
+$router->get('/my-tent', [TentController::class, 'mine']);
+$router->get('/members', [MemberController::class, 'index']);
+$router->get('/members/show', [MemberController::class, 'show']);
+$router->get('/members/photo', [MemberController::class, 'photo']);
+$router->get('/attendance', [AttendanceController::class, 'index']);
+$router->get('/attendance/history', [AttendanceController::class, 'history']);
+$router->post('/tents/create', [TentController::class, 'create']);
+$router->post('/tents/update', [TentController::class, 'update']);
+$router->post('/tents/deactivate', [TentController::class, 'deactivate']);
+$router->post('/tents/assign-admin', [TentController::class, 'assignAdmin']);
+$router->post('/members/create', [MemberController::class, 'create']);
+$router->post('/members/update', [MemberController::class, 'update']);
+$router->post('/members/deactivate', [MemberController::class, 'deactivate']);
+$router->post('/attendance/check-in', [AttendanceController::class, 'checkIn']);
