@@ -10,11 +10,13 @@ use RuntimeException;
 final class AttendanceService
 {
     private PDO $pdo;
+    private StreakBadgeService $streaks;
 
     public function __construct()
     {
         $config = new Config(dirname(__DIR__, 2) . '/config');
         $this->pdo = Database::connect($config);
+        $this->streaks = new StreakBadgeService();
     }
 
     public function currentSunday(): string
@@ -80,6 +82,7 @@ final class AttendanceService
 
         try {
             $stmt->execute([$memberId, $this->currentSunday(), (int) $user['id']]);
+            $this->streaks->refreshMember($memberId);
         } catch (\PDOException $exception) {
             if ($exception->getCode() === '23000') {
                 throw new RuntimeException('This member has already been checked in for this Sunday.');

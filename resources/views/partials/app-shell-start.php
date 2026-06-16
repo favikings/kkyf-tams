@@ -9,6 +9,7 @@ $navItems = [
     ['href' => '/tents', 'label' => 'Tents', 'icon' => 'network', 'roles' => ['Super Admin']],
     ['href' => '/my-tent', 'label' => 'My Tent', 'icon' => 'map-pin', 'roles' => ['Tent Admin']],
     ['href' => '/attendance', 'label' => 'Attendance', 'icon' => 'clipboard-check', 'roles' => ['Super Admin', 'Tent Admin']],
+    ['href' => '/absentees', 'label' => 'Absentees', 'icon' => 'triangle-alert', 'roles' => ['Super Admin', 'Tent Admin']],
     ['href' => '/attendance/history', 'label' => 'Reports', 'icon' => 'chart-column', 'roles' => ['Super Admin', 'Tent Admin']],
 ];
 ?>

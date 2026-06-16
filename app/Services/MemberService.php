@@ -5,15 +5,18 @@ namespace App\Services;
 use App\Core\Config;
 use App\Core\Database;
 use PDO;
+use RuntimeException;
 
 final class MemberService
 {
     private PDO $pdo;
+    private StreakBadgeService $streaks;
 
     public function __construct()
     {
         $config = new Config(dirname(__DIR__, 2) . '/config');
         $this->pdo = Database::connect($config);
+        $this->streaks = new StreakBadgeService();
     }
 
     /**
@@ -39,20 +42,29 @@ final class MemberService
             $params[] = '%' . $query . '%';
         }
 
-        $sql = "SELECT m.*, t.name AS tent_name
+        $sql = "SELECT m.*, t.name AS tent_name,
+                       COALESCE(s.current_streak, 0) AS current_streak,
+                       COALESCE(s.longest_streak, 0) AS longest_streak,
+                       COALESCE(s.total_attendance, 0) AS total_attendance,
+                       GROUP_CONCAT(DISTINCT b.name ORDER BY
+                           FIELD(b.name, 'Unstoppable', 'Faithful', 'On Fire', 'First Step', '1-Year Member', '6-Month Member', '3-Month Member')
+                           SEPARATOR '||') AS badge_names
                 FROM members m
-                JOIN tents t ON t.id = m.tent_id";
+                JOIN tents t ON t.id = m.tent_id
+                LEFT JOIN streaks s ON s.member_id = m.id
+                LEFT JOIN member_badges mb ON mb.member_id = m.id
+                LEFT JOIN badges b ON b.id = mb.badge_id";
 
         if ($where !== []) {
             $sql .= ' WHERE ' . implode(' AND ', $where);
         }
 
-        $sql .= ' ORDER BY m.full_name ASC LIMIT 200';
+        $sql .= ' GROUP BY m.id ORDER BY m.full_name ASC LIMIT 200';
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($params);
 
-        return $stmt->fetchAll();
+        return array_map([$this, 'hydrateBadges'], $stmt->fetchAll());
     }
 
     /**
@@ -62,9 +74,18 @@ final class MemberService
     public function findScoped(array $user, int $id): ?array
     {
         $params = [$id];
-        $sql = "SELECT m.*, t.name AS tent_name
+        $sql = "SELECT m.*, t.name AS tent_name,
+                       COALESCE(s.current_streak, 0) AS current_streak,
+                       COALESCE(s.longest_streak, 0) AS longest_streak,
+                       COALESCE(s.total_attendance, 0) AS total_attendance,
+                       GROUP_CONCAT(DISTINCT b.name ORDER BY
+                           FIELD(b.name, 'Unstoppable', 'Faithful', 'On Fire', 'First Step', '1-Year Member', '6-Month Member', '3-Month Member')
+                           SEPARATOR '||') AS badge_names
                 FROM members m
                 JOIN tents t ON t.id = m.tent_id
+                LEFT JOIN streaks s ON s.member_id = m.id
+                LEFT JOIN member_badges mb ON mb.member_id = m.id
+                LEFT JOIN badges b ON b.id = mb.badge_id
                 WHERE m.id = ?";
 
         if (($user['role'] ?? null) === 'Tent Admin') {
@@ -72,17 +93,17 @@ final class MemberService
             $params[] = (int) ($user['tent_id'] ?? 0);
         }
 
-        $stmt = $this->pdo->prepare($sql . ' LIMIT 1');
+        $stmt = $this->pdo->prepare($sql . ' GROUP BY m.id LIMIT 1');
         $stmt->execute($params);
         $member = $stmt->fetch();
 
-        return $member ?: null;
+        return $member ? $this->hydrateBadges($member) : null;
     }
 
     /**
      * @param array<string, string|int|null> $data
      */
-    public function create(array $data): void
+    public function create(array $data): int
     {
         $stmt = $this->pdo->prepare(
             "INSERT INTO members (
@@ -104,6 +125,11 @@ final class MemberService
             $data['profile_photo'] ?: null,
             $data['notes'] ?: null,
         ]);
+
+        $memberId = (int) $this->pdo->lastInsertId();
+        $this->streaks->refreshMember($memberId);
+
+        return $memberId;
     }
 
     /**
@@ -140,6 +166,8 @@ final class MemberService
             $data['active_status'],
             $id,
         ]);
+
+        $this->streaks->refreshMember($id);
     }
 
     public function deactivate(int $id): void
@@ -148,5 +176,20 @@ final class MemberService
             "UPDATE members SET active_status = 'inactive', updated_at = CURRENT_TIMESTAMP WHERE id = ?"
         );
         $stmt->execute([$id]);
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     * @return array<string, mixed>
+     */
+    private function hydrateBadges(array $row): array
+    {
+        $row['badges'] = [];
+
+        if (!empty($row['badge_names'])) {
+            $row['badges'] = array_values(array_filter(explode('||', (string) $row['badge_names'])));
+        }
+
+        return $row;
     }
 }

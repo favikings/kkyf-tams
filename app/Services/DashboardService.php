@@ -43,6 +43,8 @@ final class DashboardService
                 ['label' => 'Attendance Today', 'value' => $this->attendanceCount('CURDATE()'), 'icon' => 'calendar-check', 'tone' => 'light'],
                 ['label' => 'This Month Attendance', 'value' => $this->monthAttendanceCount(), 'icon' => 'chart-column', 'tone' => 'light'],
             ],
+            'absentee_summary' => $this->absenteeSummary(),
+            'absentee_alerts' => $this->recentAbsenteeAlerts(),
             'recent_members' => $this->recentMembers(),
             'recent_attendance' => $this->recentAttendance(),
         ];
@@ -61,6 +63,8 @@ final class DashboardService
                 ['label' => 'Attendance Today', 'value' => $this->attendanceCount('CURDATE()', $tentId), 'icon' => 'calendar-check', 'tone' => 'light'],
                 ['label' => 'Sunday Attendance', 'value' => $this->attendanceCount("'" . $this->currentSunday() . "'", $tentId), 'icon' => 'clipboard-check', 'tone' => 'light'],
             ],
+            'absentee_summary' => $this->absenteeSummary($tentId),
+            'absentee_alerts' => $this->recentAbsenteeAlerts($tentId),
             'recent_members' => $this->recentMembers($tentId),
             'recent_attendance' => $this->recentAttendance($tentId),
         ];
@@ -155,5 +159,61 @@ final class DashboardService
         $today = new \DateTimeImmutable('today');
 
         return $today->modify($today->format('N') === '7' ? 'today' : 'last sunday')->format('Y-m-d');
+    }
+
+    /**
+     * @return array<string, int>
+     */
+    private function absenteeSummary(?int $tentId = null): array
+    {
+        $params = [];
+        $sql = "SELECT
+                    SUM(CASE WHEN aa.resolved = 0 THEN 1 ELSE 0 END) AS open_total,
+                    SUM(CASE WHEN aa.resolved = 0 AND aa.alert_level = 'Critical' THEN 1 ELSE 0 END) AS critical_total
+                FROM absentee_alerts aa
+                JOIN members m ON m.id = aa.member_id";
+
+        if ($tentId !== null) {
+            $sql .= ' WHERE m.tent_id = ?';
+            $params[] = $tentId;
+        }
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        $row = $stmt->fetch() ?: [];
+
+        return [
+            'open_total' => (int) ($row['open_total'] ?? 0),
+            'critical_total' => (int) ($row['critical_total'] ?? 0),
+        ];
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function recentAbsenteeAlerts(?int $tentId = null): array
+    {
+        $params = [];
+        $sql = "SELECT aa.missed_count, aa.alert_level, m.id AS member_id, m.full_name, t.name AS tent_name
+                FROM absentee_alerts aa
+                JOIN members m ON m.id = aa.member_id
+                JOIN tents t ON t.id = m.tent_id
+                WHERE aa.resolved = 0";
+
+        if ($tentId !== null) {
+            $sql .= ' AND m.tent_id = ?';
+            $params[] = $tentId;
+        }
+
+        $sql .= " ORDER BY
+                    FIELD(aa.alert_level, 'Critical', 'Follow-Up Required', 'Early Warning'),
+                    aa.missed_count DESC,
+                    aa.updated_at DESC
+                  LIMIT 3";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+
+        return $stmt->fetchAll();
     }
 }

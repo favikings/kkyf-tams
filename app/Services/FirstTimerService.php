@@ -11,11 +11,13 @@ use Throwable;
 final class FirstTimerService
 {
     private PDO $pdo;
+    private StreakBadgeService $streaks;
 
     public function __construct()
     {
         $config = new Config(dirname(__DIR__, 2) . '/config');
         $this->pdo = Database::connect($config);
+        $this->streaks = new StreakBadgeService();
     }
 
     /**
@@ -204,6 +206,8 @@ final class FirstTimerService
             ]);
 
             $this->pdo->commit();
+
+            $this->streaks->refreshMember($memberId);
 
             return $memberId;
         } catch (Throwable $exception) {

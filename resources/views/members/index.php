@@ -2,6 +2,20 @@
 <?php require dirname(__DIR__) . '/partials/app-shell-start.php'; ?>
 
 <section class="content-panel members-directory" aria-labelledby="members-title">
+        <?php
+        $badgeIcon = static function (string $badge): string {
+            return match ($badge) {
+                'Unstoppable' => 'flame',
+                'Faithful' => 'shield-check',
+                'On Fire' => 'zap',
+                'First Step' => 'sparkles',
+                '1-Year Member' => 'award',
+                '6-Month Member' => 'medal',
+                '3-Month Member' => 'star',
+                default => 'badge-check',
+            };
+        };
+        ?>
         <div class="directory-header">
             <div>
                 <h1 id="members-title">Member Directory</h1>
@@ -62,7 +76,8 @@
                                 <th>Contact Info</th>
                                 <th>Tent Assignment</th>
                                 <th>Status</th>
-                                <th>Category</th>
+                                <th>Streak</th>
+                                <th>Badges</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -92,7 +107,28 @@
                                             <?= htmlspecialchars(ucfirst($member['active_status']), ENT_QUOTES, 'UTF-8') ?>
                                         </span>
                                     </td>
-                                    <td class="member-mobile-detail" data-label="Category"><?= htmlspecialchars($member['occupation'], ENT_QUOTES, 'UTF-8') ?></td>
+                                    <td class="member-mobile-detail" data-label="Streak">
+                                        <span class="member-streak-cell">
+                                            <i data-lucide="<?= (int) ($member['current_streak'] ?? 0) > 0 ? 'flame' : 'minus' ?>"></i>
+                                            <?= (int) ($member['current_streak'] ?? 0) ?> wks
+                                        </span>
+                                    </td>
+                                    <td class="member-mobile-detail" data-label="Badges">
+                                        <?php if (!empty($member['badges'])): ?>
+                                            <div class="member-badge-row">
+                                                <?php foreach (array_slice($member['badges'], 0, 3) as $badge): ?>
+                                                    <span class="member-badge-icon" title="<?= htmlspecialchars($badge, ENT_QUOTES, 'UTF-8') ?>">
+                                                        <i data-lucide="<?= $badgeIcon((string) $badge) ?>"></i>
+                                                    </span>
+                                                <?php endforeach; ?>
+                                                <?php if (count($member['badges']) > 3): ?>
+                                                    <span class="member-badge-more">+<?= count($member['badges']) - 3 ?></span>
+                                                <?php endif; ?>
+                                            </div>
+                                        <?php else: ?>
+                                            <span class="muted">None</span>
+                                        <?php endif; ?>
+                                    </td>
                                     <td data-label="Actions">
                                         <div class="table-actions">
                                             <a class="icon-button" href="members/show?id=<?= (int) $member['id'] ?>" aria-label="View <?= htmlspecialchars($member['full_name'], ENT_QUOTES, 'UTF-8') ?>">

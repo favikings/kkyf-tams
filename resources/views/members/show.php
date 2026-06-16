@@ -10,6 +10,18 @@ $basePath = rtrim(\App\Core\Env::get('BASE_PATH', '/kkyf-tams-1/public'), '/');
 $nameParts = preg_split('/\s+/', trim($member['full_name'])) ?: [];
 $initials = strtoupper(substr($nameParts[0] ?? 'M', 0, 1) . substr($nameParts[1] ?? '', 0, 1));
 [$birthMonth, $birthDay] = array_pad(explode('-', $member['date_of_birth'] ?? ''), 2, '');
+$badgeIcon = static function (string $badge): string {
+    return match ($badge) {
+        'Unstoppable' => 'flame',
+        'Faithful' => 'shield-check',
+        'On Fire' => 'zap',
+        'First Step' => 'sparkles',
+        '1-Year Member' => 'award',
+        '6-Month Member' => 'medal',
+        '3-Month Member' => 'star',
+        default => 'badge-check',
+    };
+};
 ?>
 <?php require dirname(__DIR__) . '/partials/app-shell-start.php'; ?>
 
@@ -73,13 +85,13 @@ $initials = strtoupper(substr($nameParts[0] ?? 'M', 0, 1) . substr($nameParts[1]
         <aside class="profile-stat-stack">
             <article class="profile-stat-card">
                 <span>Current Streak</span>
-                <strong>Phase 9</strong>
-                <small>Streaks are not enabled yet</small>
+                <strong><?= (int) ($member['current_streak'] ?? 0) ?> wks</strong>
+                <small><?= !empty($member['last_attendance_date']) ? 'Last attendance: ' . htmlspecialchars($member['last_attendance_date'], ENT_QUOTES, 'UTF-8') : 'No Sunday attendance yet' ?></small>
             </article>
             <article class="profile-stat-card">
                 <span>Total Attendance</span>
-                <strong>Phase 7</strong>
-                <small>Reports integration pending</small>
+                <strong><?= number_format((int) ($member['total_attendance'] ?? 0)) ?></strong>
+                <small>Longest streak: <?= (int) ($member['longest_streak'] ?? 0) ?> weeks</small>
             </article>
         </aside>
 
@@ -91,6 +103,27 @@ $initials = strtoupper(substr($nameParts[0] ?? 'M', 0, 1) . substr($nameParts[1]
                 <div><dt>Occupation</dt><dd><?= htmlspecialchars($member['occupation'], ENT_QUOTES, 'UTF-8') ?></dd></div>
                 <div><dt>School/Institution</dt><dd><?= htmlspecialchars($member['school_name'] ?: 'Not set', ENT_QUOTES, 'UTF-8') ?></dd></div>
             </dl>
+        </section>
+
+        <section class="profile-info-card profile-notes-card" aria-labelledby="badge-vault-title">
+            <div class="card-heading">
+                <h2 id="badge-vault-title">Badge Vault</h2>
+                <span class="soft-filter"><?= count($member['badges'] ?? []) ?> earned</span>
+            </div>
+            <?php if (!empty($member['badges'])): ?>
+                <div class="profile-badge-grid">
+                    <?php foreach ($member['badges'] as $badge): ?>
+                        <div class="profile-badge-card">
+                            <span class="profile-badge-icon">
+                                <i data-lucide="<?= $badgeIcon((string) $badge) ?>"></i>
+                            </span>
+                            <strong><?= htmlspecialchars($badge, ENT_QUOTES, 'UTF-8') ?></strong>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php else: ?>
+                <div class="empty-state">No badges earned yet. Consistent Sunday attendance will unlock them.</div>
+            <?php endif; ?>
         </section>
 
         <section class="profile-info-card profile-notes-card" aria-labelledby="notes-title">

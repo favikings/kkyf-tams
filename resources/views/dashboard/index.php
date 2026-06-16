@@ -6,6 +6,8 @@ $isSuperAdmin = ($user['role'] ?? null) === 'Super Admin';
 $cards = $metrics['cards'] ?? [];
 $primaryCard = $cards[0] ?? ['label' => 'Members', 'value' => 0, 'icon' => 'users'];
 $secondaryCards = array_slice($cards, 1, 3);
+$absenteeSummary = $metrics['absentee_summary'] ?? ['open_total' => 0, 'critical_total' => 0];
+$absenteeAlerts = $metrics['absentee_alerts'] ?? [];
 $attendancePercent = 0;
 
 if (!empty($cards[1]['value'])) {
@@ -75,23 +77,29 @@ $trendBars = [34, 46, 42, 54, 66, 74];
             <div>
                 <h2 id="dashboard-alerts-title"><i data-lucide="triangle-alert"></i> Absentee Alerts</h2>
                 <p class="muted">
-                    <?= $isSuperAdmin ? 'Members with missed Sundays requiring outreach.' : 'Members needing tent-level follow-up.' ?>
+                    <?= $isSuperAdmin
+                        ? number_format((int) ($absenteeSummary['critical_total'] ?? 0)) . ' critical and ' . number_format((int) ($absenteeSummary['open_total'] ?? 0)) . ' open alerts across KKYF.'
+                        : number_format((int) ($absenteeSummary['open_total'] ?? 0)) . ' active alert(s) inside your tent follow-up queue.' ?>
                 </p>
             </div>
 
             <div class="stack-list">
-                <?php foreach (array_slice($metrics['recent_members'] ?? [], 0, 3) as $member): ?>
+                <?php if ($absenteeAlerts === []): ?>
+                    <div class="empty-state">No absentee alerts are active right now.</div>
+                <?php endif; ?>
+
+                <?php foreach ($absenteeAlerts as $alert): ?>
                     <div class="alert-member-row">
                         <div>
-                            <strong><?= htmlspecialchars($member['full_name'], ENT_QUOTES, 'UTF-8') ?></strong>
-                            <small><?= htmlspecialchars($member['tent_name'], ENT_QUOTES, 'UTF-8') ?> · Follow-up queue</small>
+                            <strong><?= htmlspecialchars($alert['full_name'], ENT_QUOTES, 'UTF-8') ?></strong>
+                            <small><?= htmlspecialchars($alert['tent_name'], ENT_QUOTES, 'UTF-8') ?> · <?= htmlspecialchars($alert['alert_level'], ENT_QUOTES, 'UTF-8') ?></small>
                         </div>
-                        <span>Review</span>
+                        <span><?= (int) $alert['missed_count'] ?> wks</span>
                     </div>
                 <?php endforeach; ?>
             </div>
 
-            <a class="text-link alert-link" href="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>/members">View member list</a>
+            <a class="text-link alert-link" href="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>/absentees">Open absentee queue</a>
         </aside>
 
         <section class="dashboard-card mini-report-card" aria-labelledby="recent-members-title">
