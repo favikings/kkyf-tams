@@ -1,10 +1,17 @@
 <?php require dirname(__DIR__) . '/partials/header.php'; ?>
 <?php require dirname(__DIR__) . '/partials/app-shell-start.php'; ?>
 
-<section class="content-panel" aria-labelledby="members-title">
-        <div class="eyebrow">Phase 3</div>
-        <h1 id="members-title">Member Management</h1>
-        <p class="lede">Add, search, filter, edit, and deactivate v2 member records.</p>
+<section class="content-panel members-directory" aria-labelledby="members-title">
+        <div class="directory-header">
+            <div>
+                <h1 id="members-title">Member Directory</h1>
+                <p class="lede">Manage active constituents, track attendance, and oversee Tent assignments.</p>
+            </div>
+            <div class="directory-actions">
+                <button class="secondary-button is-disabled" type="button" disabled aria-disabled="true" title="Export CSV is planned for a later phase"><i data-lucide="download"></i> Export CSV</button>
+                <button type="button" data-modal-open="add-member-modal"><i data-lucide="user-plus"></i> Add Member</button>
+            </div>
+        </div>
 
         <?php if (!empty($error)): ?>
             <div class="alert" role="alert"><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></div>
@@ -14,56 +21,102 @@
             <div class="notice" role="status"><?= htmlspecialchars($success, ENT_QUOTES, 'UTF-8') ?></div>
         <?php endif; ?>
 
-        <form class="filter-bar" method="GET" action="members">
-            <input type="search" name="q" value="<?= htmlspecialchars($query, ENT_QUOTES, 'UTF-8') ?>" placeholder="Search by name or phone">
+        <form class="directory-filter-card" method="GET" action="members">
+            <label>
+                <span>Search</span>
+                <input type="search" name="q" value="<?= htmlspecialchars($query, ENT_QUOTES, 'UTF-8') ?>" placeholder="Search members, phones...">
+            </label>
             <?php if (($user['role'] ?? null) === 'Super Admin'): ?>
-                <select name="tent_id">
-                    <option value="">All tents</option>
-                    <?php foreach ($tents as $tent): ?>
-                        <option value="<?= (int) $tent['id'] ?>" <?= (int) $selectedTentId === (int) $tent['id'] ? 'selected' : '' ?>>
-                            <?= htmlspecialchars($tent['name'], ENT_QUOTES, 'UTF-8') ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
+                <label>
+                    <span>Tent Location</span>
+                    <select name="tent_id">
+                        <option value="">All Tents</option>
+                        <?php foreach ($tents as $tent): ?>
+                            <option value="<?= (int) $tent['id'] ?>" <?= (int) $selectedTentId === (int) $tent['id'] ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($tent['name'], ENT_QUOTES, 'UTF-8') ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </label>
             <?php endif; ?>
+            <label>
+                <span>Status</span>
+                <select disabled aria-disabled="true">
+                    <option>All Statuses</option>
+                </select>
+            </label>
             <button type="submit"><i data-lucide="search"></i> Search</button>
         </form>
 
-        <div class="cta-card">
-            <div>
-                <h2>Add a member</h2>
-                <p class="muted">Create a new profile without leaving the member list.</p>
-            </div>
-            <button type="button" data-modal-open="add-member-modal"><i data-lucide="user-plus"></i> Add Member</button>
-        </div>
-
-        <div class="record-list">
+        <div class="member-table-card">
             <?php if ($members === []): ?>
                 <div class="empty-state">No v2 members match this view.</div>
             <?php endif; ?>
 
-            <?php foreach ($members as $member): ?>
-                <article class="record-card">
-                    <div>
-                        <h2><?= htmlspecialchars($member['full_name'], ENT_QUOTES, 'UTF-8') ?></h2>
-                        <p class="muted">
-                            <?= htmlspecialchars($member['phone'] ?: 'No phone', ENT_QUOTES, 'UTF-8') ?>
-                            · <?= htmlspecialchars($member['tent_name'], ENT_QUOTES, 'UTF-8') ?>
-                        </p>
-                    </div>
-                    <div class="record-actions">
-                        <span class="status-pill <?= $member['active_status'] === 'active' ? 'is-active' : 'is-inactive' ?>">
-                            <?= htmlspecialchars(ucfirst($member['active_status']), ENT_QUOTES, 'UTF-8') ?>
-                        </span>
-                        <a class="link-button as-link" href="members/show?id=<?= (int) $member['id'] ?>"><i data-lucide="eye"></i> View Profile</a>
-                        <form method="POST" action="members/deactivate">
-                            <input type="hidden" name="_csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
-                            <input type="hidden" name="id" value="<?= (int) $member['id'] ?>">
-                            <button class="danger-button" type="submit"><i data-lucide="ban"></i> Deactivate</button>
-                        </form>
-                    </div>
-                </article>
-            <?php endforeach; ?>
+            <?php if ($members !== []): ?>
+                <div class="member-table-scroll">
+                    <table class="member-table">
+                        <thead>
+                            <tr>
+                                <th>Member Name & ID</th>
+                                <th>Contact Info</th>
+                                <th>Tent Assignment</th>
+                                <th>Status</th>
+                                <th>Category</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($members as $member): ?>
+                                <?php
+                                $nameParts = preg_split('/\s+/', trim($member['full_name'])) ?: [];
+                                $initials = strtoupper(substr($nameParts[0] ?? 'M', 0, 1) . substr($nameParts[1] ?? '', 0, 1));
+                                ?>
+                                <tr>
+                                    <td data-label="Member">
+                                        <div class="member-identity">
+                                            <span class="member-avatar"><?= htmlspecialchars($initials, ENT_QUOTES, 'UTF-8') ?></span>
+                                            <div>
+                                                <strong><?= htmlspecialchars($member['full_name'], ENT_QUOTES, 'UTF-8') ?></strong>
+                                                <small>KKYF-<?= str_pad((string) (int) $member['id'], 4, '0', STR_PAD_LEFT) ?></small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="member-mobile-detail" data-label="Contact Info">
+                                        <strong class="table-primary-text"><?= htmlspecialchars($member['phone'] ?: 'No phone', ENT_QUOTES, 'UTF-8') ?></strong>
+                                        <small><?= htmlspecialchars($member['occupation'], ENT_QUOTES, 'UTF-8') ?></small>
+                                    </td>
+                                    <td class="member-mobile-detail" data-label="Tent Assignment"><?= htmlspecialchars($member['tent_name'], ENT_QUOTES, 'UTF-8') ?></td>
+                                    <td class="member-mobile-detail" data-label="Status">
+                                        <span class="status-pill <?= $member['active_status'] === 'active' ? 'is-active' : 'is-inactive' ?>">
+                                            <?= htmlspecialchars(ucfirst($member['active_status']), ENT_QUOTES, 'UTF-8') ?>
+                                        </span>
+                                    </td>
+                                    <td class="member-mobile-detail" data-label="Category"><?= htmlspecialchars($member['occupation'], ENT_QUOTES, 'UTF-8') ?></td>
+                                    <td data-label="Actions">
+                                        <div class="table-actions">
+                                            <a class="icon-button" href="members/show?id=<?= (int) $member['id'] ?>" aria-label="View <?= htmlspecialchars($member['full_name'], ENT_QUOTES, 'UTF-8') ?>">
+                                                <i data-lucide="eye"></i>
+                                            </a>
+                                            <form method="POST" action="members/deactivate">
+                                                <input type="hidden" name="_csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
+                                                <input type="hidden" name="id" value="<?= (int) $member['id'] ?>">
+                                                <button class="icon-button danger-icon" type="submit" aria-label="Deactivate <?= htmlspecialchars($member['full_name'], ENT_QUOTES, 'UTF-8') ?>">
+                                                    <i data-lucide="ban"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="member-table-footer">
+                    <span>Showing <?= count($members) ?> members</span>
+                    <span class="muted">Limited to the current v2 directory view</span>
+                </div>
+            <?php endif; ?>
         </div>
 </section>
 

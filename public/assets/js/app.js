@@ -104,4 +104,28 @@ window.addEventListener('DOMContentLoaded', () => {
             confirmButtonColor: '#c2410c'
         });
     }
+
+    document.querySelectorAll('[data-password-toggle]').forEach((button) => {
+        button.addEventListener('click', () => {
+            const targetId = button.getAttribute('data-password-target');
+            const input = targetId ? document.getElementById(targetId) : null;
+
+            if (!input) {
+                return;
+            }
+
+            const isHidden = input.type === 'password';
+            input.type = isHidden ? 'text' : 'password';
+            button.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+
+            const icon = button.querySelector('i');
+
+            if (icon) {
+                icon.setAttribute('data-lucide', isHidden ? 'eye-off' : 'eye');
+                if (window.lucide) {
+                    window.lucide.createIcons();
+                }
+            }
+        });
+    });
 });

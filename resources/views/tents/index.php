@@ -1,10 +1,18 @@
 <?php require dirname(__DIR__) . '/partials/header.php'; ?>
 <?php require dirname(__DIR__) . '/partials/app-shell-start.php'; ?>
 
-<section class="content-panel" aria-labelledby="tents-title">
-        <div class="eyebrow">Super Admin</div>
-        <h1 id="tents-title">Tent Management</h1>
-        <p class="lede">Create, update, deactivate, and assign v2 Tent Admins to tents.</p>
+<section class="content-panel tents-admin-v2" aria-labelledby="tents-title">
+        <div class="directory-header">
+            <div>
+                <div class="eyebrow">Super Admin</div>
+                <h1 id="tents-title">Tent Management</h1>
+                <p class="lede">Create, update, deactivate, and assign Tent Admins to every KKYF tent.</p>
+            </div>
+            <div class="tent-count-pill">
+                <i data-lucide="network"></i>
+                <?= number_format(count($tents)) ?> tents
+            </div>
+        </div>
 
         <?php if (!empty($error)): ?>
             <div class="alert" role="alert"><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></div>
@@ -14,49 +22,63 @@
             <div class="notice" role="status"><?= htmlspecialchars($success, ENT_QUOTES, 'UTF-8') ?></div>
         <?php endif; ?>
 
-        <form class="management-form" method="POST" action="tents/create" enctype="multipart/form-data">
-            <input type="hidden" name="_csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
-            <div class="form-grid">
-                <label>
-                    <span>Name</span>
-                    <input type="text" name="name" required>
-                </label>
-                <label>
-                    <span>Color</span>
-                    <input class="color-input" type="color" name="color" value="#00bd06">
-                </label>
-                <label>
-                    <span>Leader Name</span>
-                    <input type="text" name="leader_name">
-                </label>
-                <label>
-                    <span>Leader Phone</span>
-                    <input type="text" name="leader_phone">
-                </label>
-                <label class="span-2">
-                    <span>Banner</span>
-                    <input type="file" name="banner" accept="image/png,image/jpeg,image/webp,image/gif">
-                </label>
-                <label class="span-2">
-                    <span>WhatsApp Link</span>
-                    <input type="url" name="whatsapp_link" placeholder="https://chat.whatsapp.com/...">
-                </label>
+        <section class="tent-create-card" aria-labelledby="create-tent-title">
+            <div class="card-heading">
+                <div>
+                    <h2 id="create-tent-title">Add Tent</h2>
+                    <p class="muted">Create a new tent location and optional display details.</p>
+                </div>
+                <span class="soft-filter">New</span>
             </div>
-            <button type="submit"><i data-lucide="plus"></i> Create Tent</button>
-        </form>
 
-        <div class="tent-list">
+            <form class="management-form tent-form-v2" method="POST" action="tents/create" enctype="multipart/form-data">
+                <input type="hidden" name="_csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
+                <div class="form-grid">
+                    <label>
+                        <span>Name</span>
+                        <input type="text" name="name" required>
+                    </label>
+                    <label>
+                        <span>Color</span>
+                        <input class="color-input" type="color" name="color" value="#00bd06">
+                    </label>
+                    <label>
+                        <span>Leader Name</span>
+                        <input type="text" name="leader_name">
+                    </label>
+                    <label>
+                        <span>Leader Phone</span>
+                        <input type="text" name="leader_phone">
+                    </label>
+                    <label class="span-2">
+                        <span>Banner</span>
+                        <input type="file" name="banner" accept="image/png,image/jpeg,image/webp,image/gif">
+                    </label>
+                    <label class="span-2">
+                        <span>WhatsApp Link</span>
+                        <input type="url" name="whatsapp_link" placeholder="https://chat.whatsapp.com/...">
+                    </label>
+                </div>
+                <button type="submit"><i data-lucide="plus"></i> Create Tent</button>
+            </form>
+        </section>
+
+        <div class="tent-grid-v2">
             <?php if ($tents === []): ?>
                 <div class="empty-state">No v2 tents have been created yet.</div>
             <?php endif; ?>
 
             <?php foreach ($tents as $tent): ?>
-                <article class="tent-card">
-                    <div class="tent-card-header">
+                <article class="tent-admin-card">
+                    <div class="tent-admin-header">
+                        <div class="tent-color-mark" style="background: <?= htmlspecialchars($tent['color'] ?: '#00bd06', ENT_QUOTES, 'UTF-8') ?>"></div>
                         <div>
                             <h2><?= htmlspecialchars($tent['name'], ENT_QUOTES, 'UTF-8') ?></h2>
                             <p class="muted">
                                 <?= htmlspecialchars($tent['leader_name'] ?: 'No leader set', ENT_QUOTES, 'UTF-8') ?>
+                                <?php if (!empty($tent['leader_phone'])): ?>
+                                    · <?= htmlspecialchars($tent['leader_phone'], ENT_QUOTES, 'UTF-8') ?>
+                                <?php endif; ?>
                             </p>
                         </div>
                         <span class="status-pill <?= $tent['status'] === 'active' ? 'is-active' : 'is-inactive' ?>">
@@ -64,7 +86,22 @@
                         </span>
                     </div>
 
-                    <form class="management-form compact-form" method="POST" action="tents/update" enctype="multipart/form-data">
+                    <div class="tent-admin-meta">
+                        <div>
+                            <span>Tent Admin</span>
+                            <strong><?= htmlspecialchars($tent['admin_name'] ?? 'Unassigned', ENT_QUOTES, 'UTF-8') ?></strong>
+                        </div>
+                        <div>
+                            <span>WhatsApp</span>
+                            <strong><?= htmlspecialchars($tent['whatsapp_link'] ? 'Configured' : 'Not set', ENT_QUOTES, 'UTF-8') ?></strong>
+                        </div>
+                        <div>
+                            <span>Banner</span>
+                            <strong><?= htmlspecialchars($tent['banner'] ? 'Uploaded' : 'Not set', ENT_QUOTES, 'UTF-8') ?></strong>
+                        </div>
+                    </div>
+
+                    <form class="management-form compact-form tent-form-v2" method="POST" action="tents/update" enctype="multipart/form-data">
                         <input type="hidden" name="_csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
                         <input type="hidden" name="id" value="<?= (int) $tent['id'] ?>">
                         <input type="hidden" name="existing_banner" value="<?= htmlspecialchars($tent['banner'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
@@ -107,7 +144,7 @@
                         <button type="submit"><i data-lucide="save"></i> Save Changes</button>
                     </form>
 
-                    <div class="tent-actions">
+                    <div class="tent-actions-v2">
                         <form method="POST" action="tents/assign-admin">
                             <input type="hidden" name="_csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
                             <input type="hidden" name="tent_id" value="<?= (int) $tent['id'] ?>">
