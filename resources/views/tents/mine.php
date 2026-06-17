@@ -16,9 +16,20 @@
             </div>
 
             <?php if (!empty($tent['whatsapp_link'])): ?>
-                <a class="secondary-button" href="<?= htmlspecialchars($tent['whatsapp_link'], ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener">
-                    <i data-lucide="message-square"></i> WhatsApp Group <i data-lucide="external-link"></i>
-                </a>
+                <div class="dashboard-actions">
+                    <a class="secondary-button" href="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>/sms?scope=tent&amp;tent_id=<?= (int) $tent['id'] ?>">
+                        <i data-lucide="messages-square"></i> Send Tent SMS
+                    </a>
+                    <a class="as-link" href="<?= htmlspecialchars($tent['whatsapp_link'], ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener">
+                        <i data-lucide="message-square"></i> WhatsApp Group <i data-lucide="external-link"></i>
+                    </a>
+                </div>
+            <?php else: ?>
+                <div class="dashboard-actions">
+                    <a class="secondary-button" href="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>/sms?scope=tent&amp;tent_id=<?= (int) $tent['id'] ?>">
+                        <i data-lucide="messages-square"></i> Send Tent SMS
+                    </a>
+                </div>
             <?php endif; ?>
         </div>
 

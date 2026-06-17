@@ -5,21 +5,90 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Offline - KKYF Fellowship</title>
-    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#00BD06">
     <style>
         body {
-            font-family: 'Inter', sans-serif;
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            background: #f8fafc;
+            color: #0f172a;
+            font-family: "Segoe UI", Arial, sans-serif;
+            box-sizing: border-box;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        .offline-card {
+            width: min(100%, 420px);
+            border: 1px solid #dbe5dd;
+            border-radius: 24px;
+            background: #ffffff;
+            box-shadow: 0 20px 48px rgba(15, 23, 42, 0.08);
+            padding: 32px 28px;
+            text-align: center;
+        }
+
+        .offline-icon-wrap {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 24px;
+        }
+
+        .offline-icon {
+            display: grid;
+            width: 88px;
+            height: 88px;
+            place-items: center;
+            border-radius: 999px;
+            background: #f1f5f9;
+            color: #94a3b8;
+        }
+
+        .offline-card h1 {
+            margin: 0 0 10px;
+            font-size: 1.75rem;
+            font-weight: 700;
+        }
+
+        .offline-card p {
+            margin: 0 0 22px;
+            color: #475569;
+            line-height: 1.6;
+        }
+
+        .offline-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            min-height: 48px;
+            border: 0;
+            border-radius: 999px;
+            background: #00bd06;
+            color: #ffffff;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 12px 24px rgba(0, 189, 6, 0.18);
+        }
+
+        .offline-button:hover {
+            background: #00a305;
         }
     </style>
 </head>
 
-<body class="bg-slate-50 min-h-screen flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
-        <!-- SVG Icon: Wifi Off -->
-        <div class="mb-6 flex justify-center">
-            <div class="bg-slate-100 p-4 rounded-full">
+<body>
+    <div class="offline-card">
+        <div class="offline-icon-wrap">
+            <div class="offline-icon">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-slate-400" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round"
@@ -28,14 +97,13 @@
             </div>
         </div>
 
-        <h1 class="text-2xl font-bold text-slate-900 mb-2 font-sans">You are Offline</h1>
-        <p class="text-slate-600 mb-6 font-inter">
+        <h1>You are Offline</h1>
+        <p>
             It looks like you've lost your internet connection.
             Check your network and try again.
         </p>
 
-        <button onclick="window.location.reload()"
-            class="w-full bg-[#00BD06] hover:bg-[#009605] text-white font-medium py-3 px-4 rounded-full transition-colors shadow-lg shadow-green-500/20 active:scale-95">
+        <button onclick="window.location.reload()" class="offline-button">
             Try Again
         </button>
     </div>

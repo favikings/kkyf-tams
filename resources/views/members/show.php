@@ -79,6 +79,15 @@ $badgeIcon = static function (string $badge): string {
                         <dd><?= htmlspecialchars($member['occupation'], ENT_QUOTES, 'UTF-8') ?></dd>
                     </div>
                 </dl>
+
+                <div class="dashboard-actions profile-action-row">
+                    <a class="secondary-button" href="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>/sms?scope=member&amp;member_id=<?= (int) $member['id'] ?>">
+                        <i data-lucide="messages-square"></i> Send SMS
+                    </a>
+                    <a class="as-link" href="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>/attendance?q=<?= urlencode((string) $member['full_name']) ?>">
+                        <i data-lucide="clipboard-check"></i> Check Attendance
+                    </a>
+                </div>
             </div>
         </section>
 

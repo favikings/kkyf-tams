@@ -22,12 +22,14 @@ final class TentController
     public function index(): string
     {
         RoleMiddleware::requireRole('Super Admin');
+        $tents = $this->tents->all();
 
         return View::render('tents/index', [
             'title' => 'Tents',
             'user' => AuthService::user(),
             'csrfToken' => Csrf::token(),
-            'tents' => $this->tents->all(),
+            'tents' => $tents,
+            'overview' => $this->tents->overview($tents),
             'tentAdmins' => $this->tents->tentAdmins(),
             'error' => $this->consumeFlash('flash_error'),
             'success' => $this->consumeFlash('flash_success'),

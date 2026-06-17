@@ -1,10 +1,14 @@
-const CACHE_NAME = 'kkyf-tams-v1';
+const CACHE_NAME = 'kkyf-tams-v4';
 
 const ASSETS_TO_CACHE = [
-  './index.php',
+  './',
   './offline.html',
-  './manifest.json'
-  // Add other CSS/JS files here as they are created
+  './manifest.json',
+  './assets/css/app.css',
+  './assets/js/app.js',
+  './assets/images/icon-192.png',
+  './assets/images/icon-512.png',
+  './assets/images/logo.jpg'
 ];
 
 // Install Event: Cache Shell
@@ -35,19 +39,44 @@ self.addEventListener('activate', (event) => {
 
 // Fetch Event: Network First, Fallback to Cache, Fallback to Offline Page
 self.addEventListener('fetch', (event) => {
-  if (event.request.mode !== 'navigate') {
+  if (event.request.method !== 'GET') {
     return;
   }
-  event.respondWith(
-    fetch(event.request)
-      .catch(() => {
-        return caches.open(CACHE_NAME)
-          .then((cache) => {
-            return cache.match(event.request)
-              .then((matching) => {
-                return matching || cache.match('/offline.html');
-              });
-          });
+
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match('./offline.html'))
+    );
+    return;
+  }
+
+  if (event.request.url.startsWith(self.location.origin)) {
+    event.respondWith(
+      caches.match(event.request).then((cached) => {
+        if (cached) {
+          return cached;
+        }
+
+        return fetch(event.request).then((response) => {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+          return response;
+        });
       })
+    );
+  }
+});
+
+self.addEventListener('sync', (event) => {
+  if (event.tag !== 'attendance-sync') {
+    return;
+  }
+
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+      clients.forEach((client) => {
+        client.postMessage({ type: 'offline-attendance-sync' });
+      });
+    })
   );
 });

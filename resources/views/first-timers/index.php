@@ -19,7 +19,7 @@ $statusClass = static function (string $status): string {
             <p class="lede">Track new visitors, update follow-up progress, and convert ready records into full members.</p>
         </div>
         <div class="directory-actions">
-            <button class="secondary-button is-disabled" type="button" disabled aria-disabled="true" title="Export is planned for a later phase"><i data-lucide="download"></i> Export CSV</button>
+            <button class="secondary-button is-disabled" type="button" disabled aria-disabled="true" title="CSV export arrives in Phase 12."><i data-lucide="download"></i> Export CSV</button>
             <button type="button" data-modal-open="add-first-timer-modal"><i data-lucide="user-plus"></i> Add First-Timer</button>
         </div>
     </div>

@@ -75,21 +75,7 @@ final class AttendanceService
             throw new RuntimeException('Member not found or outside your tent.');
         }
 
-        $stmt = $this->pdo->prepare(
-            "INSERT INTO attendance (member_id, attendance_date, service_type, checked_by, source)
-             VALUES (?, ?, 'Sunday Service', ?, 'web')"
-        );
-
-        try {
-            $stmt->execute([$memberId, $this->currentSunday(), (int) $user['id']]);
-            $this->streaks->refreshMember($memberId);
-        } catch (\PDOException $exception) {
-            if ($exception->getCode() === '23000') {
-                throw new RuntimeException('This member has already been checked in for this Sunday.');
-            }
-
-            throw $exception;
-        }
+        $this->insertAttendance($memberId, $this->currentSunday(), (int) $user['id'], 'web');
     }
 
     /**
@@ -183,5 +169,88 @@ final class AttendanceService
         $member = $stmt->fetch();
 
         return $member ?: null;
+    }
+
+    /**
+     * @param array<string, mixed> $user
+     * @param array<int, array<string, mixed>> $records
+     * @return array<int, array<string, mixed>>
+     */
+    public function syncQueuedCheckIns(array $user, array $records): array
+    {
+        $results = [];
+
+        foreach ($records as $record) {
+            $localId = trim((string) ($record['local_id'] ?? ''));
+            $memberId = (int) ($record['member_id'] ?? 0);
+            $attendanceDate = $this->normalizedAttendanceDate((string) ($record['attendance_date'] ?? ''));
+
+            if ($localId === '' || $memberId <= 0 || $attendanceDate === '') {
+                $results[] = [
+                    'local_id' => $localId,
+                    'status' => 'error',
+                    'message' => 'Queued attendance record is incomplete.',
+                ];
+                continue;
+            }
+
+            $member = $this->scopedMember($user, $memberId);
+            if ($member === null) {
+                $results[] = [
+                    'local_id' => $localId,
+                    'status' => 'error',
+                    'message' => 'Member not found or outside your tent.',
+                ];
+                continue;
+            }
+
+            try {
+                $this->insertAttendance($memberId, $attendanceDate, (int) ($user['id'] ?? 0), 'offline');
+                $results[] = [
+                    'local_id' => $localId,
+                    'status' => 'sent',
+                    'message' => 'Attendance synced.',
+                ];
+            } catch (RuntimeException $exception) {
+                $results[] = [
+                    'local_id' => $localId,
+                    'status' => 'duplicate',
+                    'message' => $exception->getMessage(),
+                ];
+            }
+        }
+
+        return $results;
+    }
+
+    private function insertAttendance(int $memberId, string $attendanceDate, int $checkedBy, string $source): void
+    {
+        $stmt = $this->pdo->prepare(
+            "INSERT INTO attendance (member_id, attendance_date, service_type, checked_by, source)
+             VALUES (?, ?, 'Sunday Service', ?, ?)"
+        );
+
+        try {
+            $stmt->execute([$memberId, $attendanceDate, $checkedBy, $source]);
+            $this->streaks->refreshMember($memberId);
+        } catch (\PDOException $exception) {
+            if ($exception->getCode() === '23000') {
+                throw new RuntimeException('This member has already been checked in for this Sunday.');
+            }
+
+            throw $exception;
+        }
+    }
+
+    private function normalizedAttendanceDate(string $date): string
+    {
+        $date = trim($date);
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+            return '';
+        }
+
+        [$year, $month, $day] = array_map('intval', explode('-', $date));
+
+        return checkdate($month, $day, $year) ? $date : '';
     }
 }

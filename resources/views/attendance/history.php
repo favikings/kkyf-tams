@@ -9,10 +9,10 @@ $uniqueDates = count(array_unique(array_column($records, 'attendance_date')));
 <section class="content-panel attendance-history-v2" aria-labelledby="history-title">
     <div class="report-header">
         <div>
-            <div class="eyebrow">Attendance Reports</div>
+            <div class="eyebrow">Attendance Review</div>
             <h1 id="history-title">Attendance History</h1>
             <p class="lede">
-                Review service check-ins, filter by date or tent, and validate migrated attendance records.
+                Review service check-ins, filter by date or tent, and validate migrated attendance records in one place.
             </p>
         </div>
         <a class="as-link" href="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>/attendance"><i data-lucide="clipboard-check"></i> Back to Check-in</a>

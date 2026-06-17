@@ -69,12 +69,7 @@ final class AbsenteeController
      */
     private function availableTents(array $user): array
     {
-        if (($user['role'] ?? null) === 'Tent Admin') {
-            $tent = $this->tents->find((int) ($user['tent_id'] ?? 0));
-            return $tent === null ? [] : [$tent];
-        }
-
-        return $this->tents->all();
+        return $this->tents->availableForUser($user);
     }
 
     private function verifyCsrf(): void

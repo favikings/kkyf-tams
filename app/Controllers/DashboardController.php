@@ -7,15 +7,18 @@ use App\Core\View;
 use App\Middleware\AuthMiddleware;
 use App\Middleware\RoleMiddleware;
 use App\Services\AuthService;
+use App\Services\BirthdayService;
 use App\Services\DashboardService;
 
 final class DashboardController
 {
     private DashboardService $dashboard;
+    private BirthdayService $birthdays;
 
     public function __construct()
     {
         $this->dashboard = new DashboardService();
+        $this->birthdays = new BirthdayService();
     }
 
     public function index(): string
@@ -28,6 +31,7 @@ final class DashboardController
             'user' => $user,
             'csrfToken' => Csrf::token(),
             'metrics' => $this->dashboard->metricsFor($user),
+            'upcomingBirthdays' => $this->birthdays->upcomingBirthdaysForUser($user, 7),
         ]);
     }
 

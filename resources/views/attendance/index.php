@@ -8,7 +8,14 @@ $checkedVisible = count(array_filter($members, static fn (array $member): bool =
 $capacityPercent = $visibleCount > 0 ? min(100, (int) round(($checkedVisible / $visibleCount) * 100)) : 0;
 ?>
 
-<section class="content-panel attendance-checkin-v2" aria-labelledby="attendance-title">
+<section
+    class="content-panel attendance-checkin-v2"
+    aria-labelledby="attendance-title"
+    data-offline-attendance
+    data-sync-endpoint="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>/attendance/sync-offline"
+    data-csrf-token="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>"
+    data-attendance-date="<?= htmlspecialchars($summary['attendance_date'], ENT_QUOTES, 'UTF-8') ?>"
+>
     <div class="attendance-header-v2">
         <div>
             <h1 id="attendance-title">Attendance Check-in</h1>
@@ -42,6 +49,43 @@ $capacityPercent = $visibleCount > 0 ? min(100, (int) round(($checkedVisible / $
                 <div class="locked-date-control">
                     <i data-lucide="calendar"></i>
                     <?= htmlspecialchars($summary['attendance_date'], ENT_QUOTES, 'UTF-8') ?>
+                </div>
+            </section>
+
+            <section class="offline-sync-card" aria-labelledby="offline-sync-title">
+                <div class="card-heading">
+                    <h2 id="offline-sync-title">Offline Sync</h2>
+                    <span class="soft-filter" data-offline-network-label>Checking network...</span>
+                </div>
+                <div class="offline-sync-grid">
+                    <div>
+                        <span>Queued Check-ins</span>
+                        <strong data-offline-queue-count>0</strong>
+                        <small>Stored on this device until sync completes</small>
+                    </div>
+                    <div>
+                        <span>Sync State</span>
+                        <strong data-offline-sync-state>Idle</strong>
+                        <small data-offline-sync-message>Online check-ins will still submit immediately.</small>
+                    </div>
+                </div>
+                <div class="offline-sync-meta">
+                    <div class="offline-sync-meta-item">
+                        <span>Last Sync</span>
+                        <strong data-offline-last-sync-time>Not yet synced on this device</strong>
+                    </div>
+                    <div class="offline-sync-meta-item">
+                        <span>Latest Result</span>
+                        <strong data-offline-last-sync-result>Queued, duplicate, and error counts will show here.</strong>
+                    </div>
+                </div>
+                <div class="dashboard-actions offline-sync-actions">
+                    <button type="button" class="secondary-button" data-offline-sync-now>
+                        <i data-lucide="refresh-cw"></i> Sync Queued Check-ins
+                    </button>
+                    <button type="button" class="as-link" data-offline-clear-queue>
+                        <i data-lucide="trash-2"></i> Clear Local Queue
+                    </button>
                 </div>
             </section>
 
@@ -93,7 +137,7 @@ $capacityPercent = $visibleCount > 0 ? min(100, (int) round(($checkedVisible / $
                                     $nameParts = preg_split('/\s+/', trim($member['full_name'])) ?: [];
                                     $initials = strtoupper(substr($nameParts[0] ?? 'M', 0, 1) . substr($nameParts[1] ?? '', 0, 1));
                                     ?>
-                                    <tr>
+                                    <tr data-attendance-row data-member-id="<?= (int) $member['id'] ?>">
                                         <td data-label="Member">
                                             <div class="member-identity">
                                                 <span class="member-avatar"><?= htmlspecialchars($initials, ENT_QUOTES, 'UTF-8') ?></span>
@@ -112,10 +156,17 @@ $capacityPercent = $visibleCount > 0 ? min(100, (int) round(($checkedVisible / $
                                             <?php if (!empty($member['attendance_id'])): ?>
                                                 <span class="checked-state"><i data-lucide="check-circle"></i> Checked In</span>
                                             <?php else: ?>
-                                                <form method="POST" action="attendance/check-in">
+                                                <form method="POST" action="attendance/check-in" data-offline-checkin-form>
                                                     <input type="hidden" name="_csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
                                                     <input type="hidden" name="member_id" value="<?= (int) $member['id'] ?>">
-                                                    <button class="checkin-button" type="submit">Check In</button>
+                                                    <button
+                                                        class="checkin-button"
+                                                        type="submit"
+                                                        data-checkin-button
+                                                        data-member-id="<?= (int) $member['id'] ?>"
+                                                        data-member-name="<?= htmlspecialchars($member['full_name'], ENT_QUOTES, 'UTF-8') ?>"
+                                                        data-member-tent="<?= htmlspecialchars($member['tent_name'], ENT_QUOTES, 'UTF-8') ?>"
+                                                    >Check In</button>
                                                 </form>
                                             <?php endif; ?>
                                         </td>
@@ -143,6 +194,10 @@ $capacityPercent = $visibleCount > 0 ? min(100, (int) round(($checkedVisible / $
                         <span>Visible Members</span>
                     </div>
                 </div>
+                <div class="queued-mini-summary" data-offline-queued-summary hidden>
+                    <i data-lucide="wifi-off"></i>
+                    <span data-offline-queued-summary-text>0 check-ins are waiting in the offline queue.</span>
+                </div>
                 <div class="progress-meter">
                     <span style="width: <?= (int) $capacityPercent ?>%"></span>
                 </div>
@@ -158,6 +213,14 @@ $capacityPercent = $visibleCount > 0 ? min(100, (int) round(($checkedVisible / $
                     <span class="text-link">Live Feed</span>
                 </div>
                 <div class="stack-list">
+                    <div class="queued-feed-block" data-offline-queued-feed hidden>
+                        <div class="queued-feed-heading">
+                            <strong>Queued Offline</strong>
+                            <small data-offline-queued-feed-count>0 pending</small>
+                        </div>
+                        <div class="stack-list" data-offline-queued-feed-list></div>
+                    </div>
+
                     <?php foreach (array_slice(array_filter($members, static fn (array $member): bool => !empty($member['attendance_id'])), 0, 4) as $member): ?>
                         <?php
                         $nameParts = preg_split('/\s+/', trim($member['full_name'])) ?: [];
@@ -173,7 +236,7 @@ $capacityPercent = $visibleCount > 0 ? min(100, (int) round(($checkedVisible / $
                     <?php endforeach; ?>
 
                     <?php if ($checkedVisible === 0): ?>
-                        <div class="empty-state">No check-ins in this filtered list yet.</div>
+                        <div class="empty-state" data-recent-checkins-empty>No check-ins in this filtered list yet.</div>
                     <?php endif; ?>
                 </div>
             </section>

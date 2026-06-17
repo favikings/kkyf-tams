@@ -39,7 +39,7 @@ final class DashboardService
             'cards' => [
                 ['label' => 'Total Members', 'value' => $this->count('members'), 'icon' => 'users', 'tone' => 'primary'],
                 ['label' => 'Active Members', 'value' => $this->count('members', "active_status = 'active'"), 'icon' => 'user-check', 'tone' => 'light'],
-                ['label' => 'Total Tents', 'value' => $this->count('tents'), 'icon' => 'tent', 'tone' => 'light'],
+                ['label' => 'Total Tents', 'value' => $this->visibleTentCount(), 'icon' => 'tent', 'tone' => 'light'],
                 ['label' => 'Attendance Today', 'value' => $this->attendanceCount('CURDATE()'), 'icon' => 'calendar-check', 'tone' => 'light'],
                 ['label' => 'This Month Attendance', 'value' => $this->monthAttendanceCount(), 'icon' => 'chart-column', 'tone' => 'light'],
             ],
@@ -83,6 +83,34 @@ final class DashboardService
         }
 
         return (int) $this->pdo->query($sql)->fetchColumn();
+    }
+
+    private function visibleTentCount(): int
+    {
+        if ($this->hasLegacyTentMappings()) {
+            return (int) $this->pdo->query(
+                "SELECT COUNT(DISTINCT target_id)
+                 FROM migration_logs
+                 WHERE source_table = 'legacy_tents'
+                   AND target_table = 'tents'
+                   AND status IN ('success', 'skipped')
+                   AND target_id IS NOT NULL"
+            )->fetchColumn();
+        }
+
+        return $this->count('tents');
+    }
+
+    private function hasLegacyTentMappings(): bool
+    {
+        return (int) $this->pdo->query(
+            "SELECT COUNT(DISTINCT target_id)
+             FROM migration_logs
+             WHERE source_table = 'legacy_tents'
+               AND target_table = 'tents'
+               AND status IN ('success', 'skipped')
+               AND target_id IS NOT NULL"
+        )->fetchColumn() > 0;
     }
 
     private function attendanceCount(string $dateSql, ?int $tentId = null): int

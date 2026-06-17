@@ -22,7 +22,7 @@
                 <p class="lede">Manage active constituents, track attendance, and oversee Tent assignments.</p>
             </div>
             <div class="directory-actions">
-                <button class="secondary-button is-disabled" type="button" disabled aria-disabled="true" title="Export CSV is planned for a later phase"><i data-lucide="download"></i> Export CSV</button>
+                <button class="secondary-button is-disabled" type="button" disabled aria-disabled="true" title="CSV export arrives in Phase 12."><i data-lucide="download"></i> Export CSV</button>
                 <button type="button" data-modal-open="add-member-modal"><i data-lucide="user-plus"></i> Add Member</button>
             </div>
         </div>

@@ -8,6 +8,7 @@ $primaryCard = $cards[0] ?? ['label' => 'Members', 'value' => 0, 'icon' => 'user
 $secondaryCards = array_slice($cards, 1, 3);
 $absenteeSummary = $metrics['absentee_summary'] ?? ['open_total' => 0, 'critical_total' => 0];
 $absenteeAlerts = $metrics['absentee_alerts'] ?? [];
+$upcomingBirthdays = $upcomingBirthdays ?? [];
 $attendancePercent = 0;
 
 if (!empty($cards[1]['value'])) {
@@ -30,7 +31,7 @@ $trendBars = [34, 46, 42, 54, 66, 74];
         </div>
 
         <div class="dashboard-actions">
-            <a class="secondary-button" href="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>/attendance/history"><i data-lucide="download"></i> Export Reports</a>
+            <a class="secondary-button" href="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>/attendance/history"><i data-lucide="history"></i> Attendance History</a>
             <a class="as-link" href="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>/attendance"><i data-lucide="clipboard-check"></i> Take Attendance</a>
         </div>
     </div>
@@ -154,6 +155,40 @@ $trendBars = [34, 46, 42, 54, 66, 74];
                     </div>
                 <?php endforeach; ?>
             </div>
+        </section>
+
+        <section class="dashboard-card mini-report-card" aria-labelledby="upcoming-birthdays-title">
+            <div class="card-heading">
+                <h2 id="upcoming-birthdays-title">Upcoming Birthdays</h2>
+                <span class="soft-filter">
+                    <?= count(array_filter($upcomingBirthdays, static fn (array $birthday): bool => !empty($birthday['is_today_birthday']))) ?> today
+                </span>
+            </div>
+
+            <div class="stack-list">
+                <?php if ($upcomingBirthdays === []): ?>
+                    <div class="empty-state">No birthdays are coming up in the next 7 days.</div>
+                <?php endif; ?>
+
+                <?php foreach (array_slice($upcomingBirthdays, 0, 4) as $birthday): ?>
+                    <?php
+                    $birthdayParts = preg_split('/\s+/', trim($birthday['full_name'])) ?: [];
+                    $birthdayInitials = strtoupper(substr($birthdayParts[0] ?? 'M', 0, 1) . substr($birthdayParts[1] ?? '', 0, 1));
+                    ?>
+                    <div class="mini-row">
+                        <span class="mini-icon mini-avatar"><?= htmlspecialchars($birthdayInitials, ENT_QUOTES, 'UTF-8') ?></span>
+                        <div>
+                            <strong><?= htmlspecialchars($birthday['full_name'], ENT_QUOTES, 'UTF-8') ?></strong>
+                            <small>
+                                <?= htmlspecialchars((string) $birthday['birthday_label'], ENT_QUOTES, 'UTF-8') ?>
+                                ·
+                                <?= !empty($birthday['is_today_birthday']) ? 'Today' : 'In ' . (int) $birthday['days_until_birthday'] . ' day' . ((int) $birthday['days_until_birthday'] === 1 ? '' : 's') ?>
+                            </small>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+            <a class="text-link" href="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>/birthdays">View all birthdays</a>
         </section>
 
         <section class="dashboard-card progress-card" aria-labelledby="capacity-title">

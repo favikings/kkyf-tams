@@ -10,6 +10,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($title ?? 'KKYF Membership Portal v2', ENT_QUOTES, 'UTF-8') ?></title>
+    <meta name="theme-color" content="#00BD06">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="KKYF TAMS">
+    <link rel="manifest" href="<?= htmlspecialchars($assetBasePath, ENT_QUOTES, 'UTF-8') ?>/manifest.json">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -18,4 +23,4 @@
     <link rel="stylesheet" href="<?= htmlspecialchars($assetBasePath, ENT_QUOTES, 'UTF-8') ?>/assets/css/app.css?v=<?= htmlspecialchars($cssVersion, ENT_QUOTES, 'UTF-8') ?>">
 </head>
 
-<body>
+<body data-base-path="<?= htmlspecialchars($assetBasePath, ENT_QUOTES, 'UTF-8') ?>">

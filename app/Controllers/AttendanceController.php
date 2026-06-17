@@ -79,18 +79,38 @@ final class AttendanceController
         ]);
     }
 
+    public function syncOffline(): string
+    {
+        AuthMiddleware::requireAuth();
+
+        $payload = json_decode((string) file_get_contents('php://input'), true);
+        $token = is_array($payload) ? ($payload['csrf_token'] ?? null) : null;
+
+        if (!Csrf::verify(is_string($token) ? $token : null)) {
+            return $this->jsonResponse([
+                'ok' => false,
+                'message' => 'Security token expired. Please refresh and try again.',
+                'results' => [],
+            ], 419);
+        }
+
+        $records = is_array($payload['records'] ?? null) ? $payload['records'] : [];
+        $results = $this->attendance->syncQueuedCheckIns(AuthService::user() ?? [], $records);
+
+        return $this->jsonResponse([
+            'ok' => true,
+            'message' => 'Offline attendance sync completed.',
+            'results' => $results,
+        ]);
+    }
+
     /**
      * @param array<string, mixed> $user
      * @return array<int, array<string, mixed>>
      */
     private function availableTents(array $user): array
     {
-        if (($user['role'] ?? null) === 'Tent Admin') {
-            $tent = $this->tents->find((int) ($user['tent_id'] ?? 0));
-            return $tent === null ? [] : [$tent];
-        }
-
-        return $this->tents->all();
+        return $this->tents->availableForUser($user);
     }
 
     private function verifyCsrf(): void
@@ -107,5 +127,16 @@ final class AttendanceController
         unset($_SESSION[$key]);
 
         return $value;
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     */
+    private function jsonResponse(array $payload, int $status = 200): string
+    {
+        http_response_code($status);
+        header('Content-Type: application/json');
+
+        return json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '{}';
     }
 }
