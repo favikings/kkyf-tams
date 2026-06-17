@@ -7,47 +7,47 @@ $nextSevenTotal = (int) ($summary['next_7_days_total'] ?? 0);
 $nextThirtyTotal = (int) ($summary['next_30_days_total'] ?? 0);
 ?>
 
-<section class="content-panel birthday-hub" aria-labelledby="birthday-title">
+<section class="content-panel birthday-hub anniversary-hub" aria-labelledby="anniversary-title">
     <div class="directory-header">
         <div>
-            <div class="eyebrow">Celebrations</div>
-            <h1 id="birthday-title">Upcoming Birthdays</h1>
-            <p class="lede">Track who is celebrating soon and jump straight into a birthday message when needed.</p>
+            <div class="eyebrow">Milestones</div>
+            <h1 id="anniversary-title">Upcoming Anniversaries</h1>
+            <p class="lede">See who is marking another year in KKYF and send a quick congratulations message when it matters.</p>
         </div>
         <div class="directory-actions">
-            <a class="secondary-button" href="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>/anniversaries"><i data-lucide="party-popper"></i> Anniversaries</a>
+            <a class="secondary-button" href="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>/birthdays"><i data-lucide="cake"></i> Birthdays</a>
             <a class="secondary-button" href="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>/dashboard"><i data-lucide="layout-dashboard"></i> Dashboard</a>
         </div>
     </div>
 
     <?php if ($todayTotal > 0): ?>
-        <div class="notice birthday-highlight-banner" role="status">
-            <i data-lucide="cake"></i>
-            <?= $todayTotal === 1 ? '1 member is celebrating today.' : number_format($todayTotal) . ' members are celebrating today.' ?>
+        <div class="notice anniversary-highlight-banner" role="status">
+            <i data-lucide="party-popper"></i>
+            <?= $todayTotal === 1 ? '1 member is marking an anniversary today.' : number_format($todayTotal) . ' members are marking anniversaries today.' ?>
         </div>
     <?php endif; ?>
 
     <div class="birthday-summary-grid">
-        <article class="birthday-summary-card <?= $todayTotal > 0 ? 'birthday-summary-card-feature' : '' ?>">
+        <article class="birthday-summary-card <?= $todayTotal > 0 ? 'anniversary-summary-card-feature' : '' ?>">
             <span>Today</span>
             <strong><?= number_format($todayTotal) ?></strong>
-            <small>Members celebrating today</small>
+            <small>Anniversaries happening today</small>
         </article>
         <article class="birthday-summary-card">
             <span>Next 7 Days</span>
             <strong><?= number_format($nextSevenTotal) ?></strong>
-            <small>Immediate celebration window</small>
+            <small>Immediate milestone window</small>
         </article>
         <article class="birthday-summary-card">
             <span>Next 30 Days</span>
             <strong><?= number_format($nextThirtyTotal) ?></strong>
-            <small>Full planning window</small>
+            <small>Extended planning view</small>
         </article>
     </div>
 
-    <form class="directory-filter-card birthday-filter-card" method="GET" action="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>/birthdays">
+    <form class="directory-filter-card birthday-filter-card" method="GET" action="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>/anniversaries">
         <label>
-            <span>Birthday Window</span>
+            <span>Anniversary Window</span>
             <select name="days">
                 <option value="7" <?= $days === 7 ? 'selected' : '' ?>>Next 7 days</option>
                 <option value="30" <?= $days === 30 ? 'selected' : '' ?>>Next 30 days</option>
@@ -55,37 +55,37 @@ $nextThirtyTotal = (int) ($summary['next_30_days_total'] ?? 0);
         </label>
         <div class="birthday-filter-note">
             <strong><?= $days === 7 ? 'Short window' : 'Extended window' ?></strong>
-            <small><?= $days === 7 ? 'Best for immediate outreach.' : 'Useful for monthly planning and celebrations.' ?></small>
+            <small><?= $days === 7 ? 'Best for quick recognition.' : 'Useful for planning monthly milestone outreach.' ?></small>
         </div>
-        <button type="submit"><i data-lucide="calendar-heart"></i> Update View</button>
+        <button type="submit"><i data-lucide="calendar-range"></i> Update View</button>
     </form>
 
     <div class="member-table-card">
-        <?php if ($birthdays === []): ?>
+        <?php if ($anniversaries === []): ?>
             <div class="empty-state">
-                No active birthdays fall inside this window.
-                <a class="text-link" href="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>/members">Review member records</a>
+                No active anniversaries fall inside this window.
+                <a class="text-link" href="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>/members">Review join dates</a>
             </div>
         <?php else: ?>
             <div class="member-table-scroll">
-                <table class="member-table birthday-table">
+                <table class="member-table anniversary-table">
                     <thead>
                         <tr>
                             <th>Member</th>
                             <th>Tent</th>
-                            <th>Birthday</th>
-                            <th>Countdown</th>
+                            <th>Anniversary</th>
+                            <th>Milestone</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($birthdays as $member): ?>
+                        <?php foreach ($anniversaries as $member): ?>
                             <?php
                             $nameParts = preg_split('/\s+/', trim($member['full_name'])) ?: [];
                             $initials = strtoupper(substr($nameParts[0] ?? 'M', 0, 1) . substr($nameParts[1] ?? '', 0, 1));
-                            $birthdayMessage = 'Happy Birthday, ' . trim((string) $member['full_name']) . '! Wishing you joy, grace, and a blessed new year ahead from KKYF.';
+                            $message = 'Congratulations, ' . trim((string) $member['full_name']) . '! Happy ' . (int) $member['celebrating_years'] . ' year anniversary in KKYF. We celebrate your journey and growth with us.';
                             ?>
-                            <tr class="<?= !empty($member['is_today_birthday']) ? 'birthday-row-today' : '' ?>">
+                            <tr class="<?= !empty($member['is_today_anniversary']) ? 'anniversary-row-today' : '' ?>">
                                 <td data-label="Member">
                                     <div class="member-identity">
                                         <span class="member-avatar"><?= htmlspecialchars($initials, ENT_QUOTES, 'UTF-8') ?></span>
@@ -99,14 +99,15 @@ $nextThirtyTotal = (int) ($summary['next_30_days_total'] ?? 0);
                                     <strong class="table-primary-text"><?= htmlspecialchars($member['tent_name'], ENT_QUOTES, 'UTF-8') ?></strong>
                                     <small><?= htmlspecialchars($member['occupation'], ENT_QUOTES, 'UTF-8') ?></small>
                                 </td>
-                                <td class="member-mobile-detail" data-label="Birthday">
-                                    <strong class="table-primary-text"><?= htmlspecialchars((string) $member['birthday_label'], ENT_QUOTES, 'UTF-8') ?></strong>
-                                    <small><?= !empty($member['phone']) ? htmlspecialchars((string) $member['phone'], ENT_QUOTES, 'UTF-8') : 'No phone saved' ?></small>
+                                <td class="member-mobile-detail" data-label="Anniversary">
+                                    <strong class="table-primary-text"><?= htmlspecialchars((string) $member['anniversary_label'], ENT_QUOTES, 'UTF-8') ?></strong>
+                                    <small>Joined <?= htmlspecialchars((string) $member['join_date'], ENT_QUOTES, 'UTF-8') ?></small>
                                 </td>
-                                <td class="member-mobile-detail" data-label="Countdown">
-                                    <span class="status-pill <?= !empty($member['is_today_birthday']) ? 'is-active' : 'is-called' ?>">
-                                        <?= !empty($member['is_today_birthday']) ? 'Today' : 'In ' . (int) $member['days_until_birthday'] . ' day' . ((int) $member['days_until_birthday'] === 1 ? '' : 's') ?>
+                                <td class="member-mobile-detail" data-label="Milestone">
+                                    <span class="status-pill <?= !empty($member['is_today_anniversary']) ? 'is-active' : 'is-called' ?>">
+                                        <?= !empty($member['is_today_anniversary']) ? 'Today' : 'In ' . (int) $member['days_until_anniversary'] . ' day' . ((int) $member['days_until_anniversary'] === 1 ? '' : 's') ?>
                                     </span>
+                                    <small class="anniversary-milestone-copy"><?= (int) $member['celebrating_years'] ?> year<?= (int) $member['celebrating_years'] === 1 ? '' : 's' ?> in KKYF</small>
                                 </td>
                                 <td data-label="Actions">
                                     <div class="table-actions">
@@ -116,13 +117,13 @@ $nextThirtyTotal = (int) ($summary['next_30_days_total'] ?? 0);
                                         <?php if (!empty($member['phone'])): ?>
                                             <a
                                                 class="icon-button"
-                                                href="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>/sms?scope=member&amp;member_id=<?= (int) $member['id'] ?>&amp;message=<?= urlencode($birthdayMessage) ?>"
-                                                aria-label="Send birthday SMS to <?= htmlspecialchars($member['full_name'], ENT_QUOTES, 'UTF-8') ?>"
+                                                href="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>/sms?scope=member&amp;member_id=<?= (int) $member['id'] ?>&amp;message=<?= urlencode($message) ?>"
+                                                aria-label="Send anniversary SMS to <?= htmlspecialchars($member['full_name'], ENT_QUOTES, 'UTF-8') ?>"
                                             >
                                                 <i data-lucide="messages-square"></i>
                                             </a>
                                         <?php else: ?>
-                                            <span class="icon-button is-disabled-inline" title="No phone saved for birthday SMS" aria-hidden="true">
+                                            <span class="icon-button is-disabled-inline" title="No phone saved for anniversary SMS" aria-hidden="true">
                                                 <i data-lucide="phone-off"></i>
                                             </span>
                                         <?php endif; ?>
@@ -134,8 +135,8 @@ $nextThirtyTotal = (int) ($summary['next_30_days_total'] ?? 0);
                 </table>
             </div>
             <div class="member-table-footer">
-                <span>Showing <?= count($birthdays) ?> birthday reminder<?= count($birthdays) === 1 ? '' : 's' ?></span>
-                <span class="muted">Only active members inside your visible scope are shown</span>
+                <span>Showing <?= count($anniversaries) ?> anniversary reminder<?= count($anniversaries) === 1 ? '' : 's' ?></span>
+                <span class="muted">Only active members with join dates inside your visible scope are shown</span>
             </div>
         <?php endif; ?>
     </div>

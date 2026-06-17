@@ -10,6 +10,14 @@ $basePath = rtrim(\App\Core\Env::get('BASE_PATH', '/kkyf-tams-1/public'), '/');
 $nameParts = preg_split('/\s+/', trim($member['full_name'])) ?: [];
 $initials = strtoupper(substr($nameParts[0] ?? 'M', 0, 1) . substr($nameParts[1] ?? '', 0, 1));
 [$birthMonth, $birthDay] = array_pad(explode('-', $member['date_of_birth'] ?? ''), 2, '');
+$anniversary = 'Not set';
+$anniversaryYears = null;
+if (!empty($member['join_date']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $member['join_date'])) {
+    $joinDate = new DateTimeImmutable($member['join_date']);
+    $today = new DateTimeImmutable('today');
+    $anniversary = $joinDate->format('F j, Y');
+    $anniversaryYears = max(0, (int) $joinDate->diff($today)->y);
+}
 $badgeIcon = static function (string $badge): string {
     return match ($badge) {
         'Unstoppable' => 'flame',
@@ -109,8 +117,17 @@ $badgeIcon = static function (string $badge): string {
             <dl class="profile-info-list">
                 <div><dt>Phone</dt><dd><?= htmlspecialchars($member['phone'] ?: 'Not set', ENT_QUOTES, 'UTF-8') ?></dd></div>
                 <div><dt>D.O.B</dt><dd><?= htmlspecialchars($birthday, ENT_QUOTES, 'UTF-8') ?></dd></div>
+                <div><dt>Anniversary</dt><dd><?= htmlspecialchars($anniversary, ENT_QUOTES, 'UTF-8') ?></dd></div>
                 <div><dt>Occupation</dt><dd><?= htmlspecialchars($member['occupation'], ENT_QUOTES, 'UTF-8') ?></dd></div>
                 <div><dt>School/Institution</dt><dd><?= htmlspecialchars($member['school_name'] ?: 'Not set', ENT_QUOTES, 'UTF-8') ?></dd></div>
+            </dl>
+        </section>
+
+        <section class="profile-info-card" aria-labelledby="milestone-title">
+            <h2 id="milestone-title">Membership Milestone</h2>
+            <dl class="profile-info-list">
+                <div><dt>Join Date</dt><dd><?= htmlspecialchars($member['join_date'] ?: 'Not set', ENT_QUOTES, 'UTF-8') ?></dd></div>
+                <div><dt>Years in KKYF</dt><dd><?= $anniversaryYears !== null ? number_format($anniversaryYears) : 'Not set' ?></dd></div>
             </dl>
         </section>
 

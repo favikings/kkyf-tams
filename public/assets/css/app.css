@@ -4559,6 +4559,11 @@ h2 {
     gap: 24px;
 }
 
+.reports-hub {
+    display: grid;
+    gap: 24px;
+}
+
 .birthday-summary-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -4583,6 +4588,13 @@ h2 {
     border-color: rgba(0, 168, 59, 0.22);
 }
 
+.anniversary-summary-card-feature {
+    background:
+        radial-gradient(circle at 88% 18%, rgba(0, 90, 194, 0.10), transparent 28%),
+        var(--surface-container-lowest);
+    border-color: rgba(0, 90, 194, 0.20);
+}
+
 .birthday-summary-card span {
     color: var(--on-surface-variant);
     font-size: 0.76rem;
@@ -4603,6 +4615,18 @@ h2 {
 
 .birthday-filter-card {
     grid-template-columns: minmax(220px, 0.8fr) minmax(240px, 1fr) auto;
+}
+
+.report-filter-card {
+    grid-template-columns: minmax(170px, 0.8fr) minmax(160px, 0.8fr) minmax(160px, 0.8fr) minmax(170px, 0.8fr) auto;
+}
+
+.report-summary-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.report-card-heading {
+    padding: 18px 18px 0;
 }
 
 .birthday-filter-note {
@@ -4631,6 +4655,15 @@ h2 {
     align-items: center;
     gap: 10px;
     width: fit-content;
+    max-width: 100%;
+}
+
+.anniversary-highlight-banner {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    width: fit-content;
+    max-width: 100%;
 }
 
 .birthday-row-today {
@@ -4641,10 +4674,69 @@ h2 {
     border-bottom-color: rgba(0, 168, 59, 0.16);
 }
 
+.anniversary-row-today {
+    background: rgba(0, 90, 194, 0.05);
+}
+
+.anniversary-row-today td {
+    border-bottom-color: rgba(0, 90, 194, 0.14);
+}
+
+.anniversary-milestone-copy {
+    display: block;
+    margin-top: 6px;
+}
+
+.is-disabled-inline {
+    opacity: 0.42;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
 @media (max-width: 980px) {
     .birthday-summary-grid,
-    .birthday-filter-card {
+    .birthday-filter-card,
+    .report-filter-card,
+    .report-summary-grid {
         grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 760px) {
+    .birthday-highlight-banner,
+    .anniversary-highlight-banner {
+        width: 100%;
+        align-items: flex-start;
+        justify-content: flex-start;
+    }
+
+    .birthday-summary-card {
+        min-height: 104px;
+        padding: 16px;
+    }
+
+    .birthday-summary-card strong {
+        font-size: 1.7rem;
+    }
+
+    .birthday-filter-note,
+    .member-table-footer {
+        gap: 6px;
+    }
+
+    .directory-actions > * {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .profile-action-row {
+        display: grid;
+        grid-template-columns: 1fr;
+        width: 100%;
+    }
+
+    .profile-action-row > * {
+        width: 100%;
     }
 }
 

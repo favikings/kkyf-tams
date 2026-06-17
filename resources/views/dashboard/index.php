@@ -9,6 +9,7 @@ $secondaryCards = array_slice($cards, 1, 3);
 $absenteeSummary = $metrics['absentee_summary'] ?? ['open_total' => 0, 'critical_total' => 0];
 $absenteeAlerts = $metrics['absentee_alerts'] ?? [];
 $upcomingBirthdays = $upcomingBirthdays ?? [];
+$upcomingAnniversaries = $upcomingAnniversaries ?? [];
 $attendancePercent = 0;
 
 if (!empty($cards[1]['value'])) {
@@ -189,6 +190,42 @@ $trendBars = [34, 46, 42, 54, 66, 74];
                 <?php endforeach; ?>
             </div>
             <a class="text-link" href="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>/birthdays">View all birthdays</a>
+        </section>
+
+        <section class="dashboard-card mini-report-card" aria-labelledby="upcoming-anniversaries-title">
+            <div class="card-heading">
+                <h2 id="upcoming-anniversaries-title">Upcoming Anniversaries</h2>
+                <span class="soft-filter">
+                    <?= count(array_filter($upcomingAnniversaries, static fn (array $item): bool => !empty($item['is_today_anniversary']))) ?> today
+                </span>
+            </div>
+
+            <div class="stack-list">
+                <?php if ($upcomingAnniversaries === []): ?>
+                    <div class="empty-state">No anniversaries are coming up in the next 7 days.</div>
+                <?php endif; ?>
+
+                <?php foreach (array_slice($upcomingAnniversaries, 0, 4) as $anniversary): ?>
+                    <?php
+                    $anniversaryParts = preg_split('/\s+/', trim($anniversary['full_name'])) ?: [];
+                    $anniversaryInitials = strtoupper(substr($anniversaryParts[0] ?? 'M', 0, 1) . substr($anniversaryParts[1] ?? '', 0, 1));
+                    ?>
+                    <div class="mini-row">
+                        <span class="mini-icon mini-avatar"><?= htmlspecialchars($anniversaryInitials, ENT_QUOTES, 'UTF-8') ?></span>
+                        <div>
+                            <strong><?= htmlspecialchars($anniversary['full_name'], ENT_QUOTES, 'UTF-8') ?></strong>
+                            <small>
+                                <?= htmlspecialchars((string) $anniversary['anniversary_label'], ENT_QUOTES, 'UTF-8') ?>
+                                ·
+                                <?= !empty($anniversary['is_today_anniversary']) ? 'Today' : 'In ' . (int) $anniversary['days_until_anniversary'] . ' day' . ((int) $anniversary['days_until_anniversary'] === 1 ? '' : 's') ?>
+                                ·
+                                <?= (int) $anniversary['celebrating_years'] ?> yr<?= (int) $anniversary['celebrating_years'] === 1 ? '' : 's' ?>
+                            </small>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+            <a class="text-link" href="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>/anniversaries">View all anniversaries</a>
         </section>
 
         <section class="dashboard-card progress-card" aria-labelledby="capacity-title">
