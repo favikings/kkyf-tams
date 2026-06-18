@@ -6,6 +6,7 @@ $selectedScope = $selectedScope ?? 'member';
 $selectedMemberId = (int) ($selectedMemberId ?? 0);
 $selectedTentId = (int) ($selectedTentId ?? 0);
 $prefilledMessage = (string) ($prefilledMessage ?? '');
+$smsMode = $smsMode ?? ['is_live' => false, 'label' => 'Simulation Mode', 'message' => 'SMS logs only.'];
 $modeLabel = static function (string $scope): string {
     return match ($scope) {
         'member' => 'Single Member',
@@ -40,6 +41,11 @@ $statusClass = static function (string $status): string {
     <?php if (!empty($success)): ?>
         <div class="notice" role="status"><?= htmlspecialchars($success, ENT_QUOTES, 'UTF-8') ?></div>
     <?php endif; ?>
+
+    <div class="status-banner <?= !empty($smsMode['is_live']) ? 'is-live' : 'is-pending' ?>">
+        <strong><?= htmlspecialchars((string) $smsMode['label'], ENT_QUOTES, 'UTF-8') ?></strong>
+        <span><?= htmlspecialchars((string) $smsMode['message'], ENT_QUOTES, 'UTF-8') ?></span>
+    </div>
 
     <div class="sms-grid">
         <section class="dashboard-card">

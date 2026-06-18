@@ -14,15 +14,14 @@ $statusClass = static function (string $status): string {
 
 <section class="content-panel first-timer-directory" aria-labelledby="first-timers-title">
     <div class="directory-header">
-        <div>
-            <h1 id="first-timers-title">First-Timer Follow-up</h1>
-            <p class="lede">Track new visitors, update follow-up progress, and convert ready records into full members.</p>
+            <div>
+                <h1 id="first-timers-title">First-Timer Follow-up</h1>
+                <p class="lede">Track new visitors, update follow-up progress, and convert ready records into full members.</p>
+            </div>
+            <div class="directory-actions">
+                <button type="button" data-modal-open="add-first-timer-modal"><i data-lucide="user-plus"></i> Add First-Timer</button>
+            </div>
         </div>
-        <div class="directory-actions">
-            <button class="secondary-button is-disabled" type="button" disabled aria-disabled="true" title="CSV export arrives in Phase 12."><i data-lucide="download"></i> Export CSV</button>
-            <button type="button" data-modal-open="add-first-timer-modal"><i data-lucide="user-plus"></i> Add First-Timer</button>
-        </div>
-    </div>
 
     <?php if (!empty($error)): ?>
         <div class="alert" role="alert"><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></div>

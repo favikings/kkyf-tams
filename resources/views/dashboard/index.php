@@ -10,13 +10,12 @@ $absenteeSummary = $metrics['absentee_summary'] ?? ['open_total' => 0, 'critical
 $absenteeAlerts = $metrics['absentee_alerts'] ?? [];
 $upcomingBirthdays = $upcomingBirthdays ?? [];
 $upcomingAnniversaries = $upcomingAnniversaries ?? [];
+$trendBars = $metrics['attendance_trend'] ?? [];
 $attendancePercent = 0;
 
 if (!empty($cards[1]['value'])) {
     $attendancePercent = min(100, (int) round(((int) ($cards[3]['value'] ?? 0) / max(1, (int) $cards[1]['value'])) * 100));
 }
-
-$trendBars = [34, 46, 42, 54, 66, 74];
 ?>
 
 <section class="content-panel dashboard-panel dashboard-v2" aria-labelledby="dashboard-title">
@@ -44,7 +43,7 @@ $trendBars = [34, 46, 42, 54, 66, 74];
                 <span class="kpi-icon"><i data-lucide="<?= htmlspecialchars($primaryCard['icon'], ENT_QUOTES, 'UTF-8') ?>"></i></span>
             </div>
             <strong><?= number_format((int) $primaryCard['value']) ?></strong>
-            <small><i data-lucide="trending-up"></i> Current v2 records</small>
+            <small><i data-lucide="trending-up"></i> Live portal snapshot</small>
         </article>
 
         <?php foreach ($secondaryCards as $card): ?>
@@ -54,7 +53,7 @@ $trendBars = [34, 46, 42, 54, 66, 74];
                     <span class="kpi-icon"><i data-lucide="<?= htmlspecialchars($card['icon'], ENT_QUOTES, 'UTF-8') ?>"></i></span>
                 </div>
                 <strong><?= number_format((int) $card['value']) ?></strong>
-                <small>Updated from migrated portal data</small>
+                <small>Updated from current records</small>
             </article>
         <?php endforeach; ?>
     </div>
@@ -66,10 +65,10 @@ $trendBars = [34, 46, 42, 54, 66, 74];
                 <span class="soft-filter">Last 6 Months</span>
             </div>
             <div class="bar-chart" aria-label="Attendance trend chart">
-                <?php foreach ($trendBars as $index => $height): ?>
+                <?php foreach ($trendBars as $bar): ?>
                     <div class="bar-column">
-                        <span style="height: <?= (int) $height ?>%"></span>
-                        <small><?= htmlspecialchars(['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'][$index], ENT_QUOTES, 'UTF-8') ?></small>
+                        <span style="height: <?= (int) ($bar['height'] ?? 14) ?>%" title="<?= number_format((int) ($bar['value'] ?? 0)) ?> attendance record(s)"></span>
+                        <small><?= htmlspecialchars((string) ($bar['label'] ?? ''), ENT_QUOTES, 'UTF-8') ?></small>
                     </div>
                 <?php endforeach; ?>
             </div>

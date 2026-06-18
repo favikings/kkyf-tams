@@ -39,6 +39,23 @@ final class ReportController
         ]);
     }
 
+    public function print(): string
+    {
+        AuthMiddleware::requireAuth();
+
+        $user = AuthService::user() ?? [];
+        $type = trim((string) ($_GET['type'] ?? 'weekly'));
+        $tentId = (int) ($_GET['tent_id'] ?? 0);
+        $dateFrom = trim((string) ($_GET['date_from'] ?? ''));
+        $dateTo = trim((string) ($_GET['date_to'] ?? ''));
+
+        return View::render('reports/print', [
+            'title' => 'Print Report',
+            'user' => $user,
+            'report' => $this->reports->build($user, $type, $tentId > 0 ? $tentId : null, $dateFrom ?: null, $dateTo ?: null),
+        ]);
+    }
+
     public function export(): string
     {
         AuthMiddleware::requireAuth();

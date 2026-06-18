@@ -122,6 +122,30 @@ final class SmsService
     }
 
     /**
+     * @return array<string, mixed>
+     */
+    public function modeSummary(): array
+    {
+        $driver = (string) ($this->config['driver'] ?? 'log_only');
+        $enabled = (bool) ($this->config['enabled'] ?? false);
+        $isLive = $enabled && $driver === 'africastalking';
+
+        if ($isLive) {
+            return [
+                'is_live' => true,
+                'label' => 'Live SMS',
+                'message' => 'Messages are configured to send through the active provider.',
+            ];
+        }
+
+        return [
+            'is_live' => false,
+            'label' => 'Simulation Mode',
+            'message' => 'SMS actions are being logged locally only until the live provider is enabled.',
+        ];
+    }
+
+    /**
      * @param array<string, mixed> $user
      */
     public function send(array $user, string $scope, ?int $memberId, ?int $tentId, string $message): void

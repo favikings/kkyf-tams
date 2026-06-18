@@ -28,6 +28,7 @@ final class ReportService
         $effectiveTentId = (($user['role'] ?? null) === 'Tent Admin')
             ? (int) ($user['tent_id'] ?? 0)
             : (($tentId !== null && $tentId > 0) ? $tentId : null);
+        $summary = $this->summary($resolvedFrom, $resolvedTo, $effectiveTentId);
 
         return [
             'type' => $type,
@@ -35,10 +36,16 @@ final class ReportService
             'date_from' => $resolvedFrom,
             'date_to' => $resolvedTo,
             'selected_tent_id' => $effectiveTentId,
-            'summary' => $this->summary($resolvedFrom, $resolvedTo, $effectiveTentId),
+            'selected_tent_name' => $effectiveTentId !== null ? $this->tentName($effectiveTentId) : 'All Tents',
+            'generated_on' => date('M j, Y'),
+            'period_label' => $this->formatDate($resolvedFrom) . ' - ' . $this->formatDate($resolvedTo),
+            'summary' => $summary,
             'rows' => $type === 'sunday'
                 ? $this->sundayRows($resolvedFrom, $effectiveTentId)
                 : $this->aggregateRows($resolvedFrom, $resolvedTo, $effectiveTentId),
+            'trend_points' => $this->trendPoints($type, $resolvedFrom, $resolvedTo, $effectiveTentId),
+            'tent_performance' => $this->tentPerformance($resolvedFrom, $resolvedTo, $effectiveTentId),
+            'demographics' => $this->demographics($effectiveTentId),
             'columns' => $type === 'sunday'
                 ? ['Member', 'Tent', 'Phone', 'Checked By', 'Source']
                 : ['Date', 'Tent', 'Check-ins', 'Unique Members'],
@@ -112,6 +119,9 @@ final class ReportService
         $row = $stmt->fetch() ?: [];
         $serviceDays = max(1, (int) ($row['service_days'] ?? 0));
         $totalCheckins = (int) ($row['total_checkins'] ?? 0);
+        $activeMembers = $this->activeMembersCount($tentId);
+        $newMembers = $this->newMembersCount($dateFrom, $dateTo, $tentId);
+        $smsSent = $this->smsSentCount($dateFrom, $dateTo, $tentId);
 
         return [
             'total_checkins' => $totalCheckins,
@@ -119,6 +129,12 @@ final class ReportService
             'tents_reached' => (int) ($row['tents_reached'] ?? 0),
             'service_days' => (int) ($row['service_days'] ?? 0),
             'average_daily_attendance' => round($totalCheckins / $serviceDays, 1),
+            'active_members_total' => $activeMembers,
+            'new_members' => $newMembers,
+            'retention_rate' => $activeMembers > 0
+                ? round((((int) ($row['unique_members'] ?? 0)) / $activeMembers) * 100)
+                : 0,
+            'sms_sent_total' => $smsSent,
         ];
     }
 
@@ -184,11 +200,282 @@ final class ReportService
     private function titleFor(string $type): string
     {
         return match ($type) {
-            'monthly' => 'Monthly Report',
-            'yearly' => 'Yearly Report',
-            'sunday' => 'Sunday Summary',
-            default => 'Weekly Report',
+            'monthly' => 'Monthly Organization Performance Report',
+            'yearly' => 'Yearly Organization Performance Report',
+            'sunday' => 'Sunday Service Performance Report',
+            default => 'Weekly Organization Performance Report',
         };
+    }
+
+    /**
+     * @return array<int, array{label:string,value:int}>
+     */
+    private function trendPoints(string $type, string $dateFrom, string $dateTo, ?int $tentId = null): array
+    {
+        $params = [$dateFrom, $dateTo];
+        $sql = "SELECT a.attendance_date, COUNT(*) AS total_checkins
+                FROM attendance a
+                JOIN members m ON m.id = a.member_id
+                WHERE a.attendance_date BETWEEN ? AND ?";
+
+        if ($tentId !== null) {
+            $sql .= ' AND m.tent_id = ?';
+            $params[] = $tentId;
+        }
+
+        $sql .= ' GROUP BY a.attendance_date ORDER BY a.attendance_date ASC';
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        $rows = $stmt->fetchAll();
+        $totalsByDate = [];
+
+        foreach ($rows as $row) {
+            $totalsByDate[(string) $row['attendance_date']] = (int) $row['total_checkins'];
+        }
+
+        if ($type === 'yearly') {
+            $points = [];
+            $year = (int) substr($dateFrom, 0, 4);
+
+            for ($month = 1; $month <= 12; $month++) {
+                $label = date('M', mktime(0, 0, 0, $month, 1, $year));
+                $value = 0;
+
+                foreach ($totalsByDate as $date => $total) {
+                    if ((int) substr($date, 0, 4) === $year && (int) substr($date, 5, 2) === $month) {
+                        $value += $total;
+                    }
+                }
+
+                $points[] = ['label' => $label, 'value' => $value];
+            }
+
+            return $points;
+        }
+
+        if ($type === 'monthly') {
+            $points = [
+                'W1' => 0,
+                'W2' => 0,
+                'W3' => 0,
+                'W4' => 0,
+                'W5' => 0,
+            ];
+
+            foreach ($totalsByDate as $date => $total) {
+                $day = (int) substr($date, 8, 2);
+                $bucket = 'W' . (string) min(5, (int) floor(($day - 1) / 7) + 1);
+                $points[$bucket] += $total;
+            }
+
+            return array_map(
+                static fn (string $label, int $value): array => ['label' => $label, 'value' => $value],
+                array_keys($points),
+                array_values($points)
+            );
+        }
+
+        if ($type === 'sunday') {
+            return [[
+                'label' => 'Sunday',
+                'value' => array_sum($totalsByDate),
+            ]];
+        }
+
+        $points = [];
+        $cursor = new DateTimeImmutable($dateFrom);
+        $end = new DateTimeImmutable($dateTo);
+
+        while ($cursor <= $end) {
+            $key = $cursor->format('Y-m-d');
+            $points[] = [
+                'label' => $cursor->format('D'),
+                'value' => (int) ($totalsByDate[$key] ?? 0),
+            ];
+            $cursor = $cursor->modify('+1 day');
+        }
+
+        return $points;
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function tentPerformance(string $dateFrom, string $dateTo, ?int $tentId = null): array
+    {
+        $params = [$dateFrom, $dateTo];
+        $sql = "SELECT t.id,
+                       t.name AS tent_name,
+                       COALESCE(NULLIF(t.leader_name, ''), 'Not assigned') AS leader_name,
+                       COUNT(a.id) AS total_checkins,
+                       COUNT(DISTINCT a.attendance_date) AS service_days,
+                       (
+                           SELECT COUNT(*)
+                           FROM members m2
+                           WHERE m2.tent_id = t.id
+                             AND m2.active_status = 'active'
+                       ) AS active_members
+                FROM tents t
+                LEFT JOIN members m ON m.tent_id = t.id
+                LEFT JOIN attendance a
+                    ON a.member_id = m.id
+                   AND a.attendance_date BETWEEN ? AND ?";
+
+        if ($tentId !== null) {
+            $sql .= ' WHERE t.id = ?';
+            $params[] = $tentId;
+        }
+
+        $sql .= ' GROUP BY t.id, t.name, t.leader_name
+                  HAVING total_checkins > 0 OR active_members > 0
+                  ORDER BY total_checkins DESC, t.name ASC
+                  LIMIT 6';
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        $rows = $stmt->fetchAll();
+
+        foreach ($rows as &$row) {
+            $activeMembers = max(1, (int) ($row['active_members'] ?? 0));
+            $serviceDays = max(1, (int) ($row['service_days'] ?? 0));
+            $rate = (int) round((((int) $row['total_checkins']) / ($activeMembers * $serviceDays)) * 100);
+            $row['average_attendance_rate'] = min(100, $rate);
+        }
+        unset($row);
+
+        return $rows;
+    }
+
+    /**
+     * @return array<int, array{label:string,count:int,percentage:int}>
+     */
+    private function demographics(?int $tentId = null): array
+    {
+        $params = [];
+        $sql = "SELECT occupation, COUNT(*) AS total
+                FROM members
+                WHERE active_status = 'active'";
+
+        if ($tentId !== null) {
+            $sql .= ' AND tent_id = ?';
+            $params[] = $tentId;
+        }
+
+        $sql .= ' GROUP BY occupation';
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        $rows = $stmt->fetchAll();
+        $map = [
+            'Student' => 0,
+            'Worker' => 0,
+            'Alumni' => 0,
+        ];
+
+        foreach ($rows as $row) {
+            $occupation = (string) ($row['occupation'] ?? '');
+            if (isset($map[$occupation])) {
+                $map[$occupation] = (int) ($row['total'] ?? 0);
+            }
+        }
+
+        $overall = max(1, array_sum($map));
+        $result = [];
+
+        foreach ($map as $label => $count) {
+            $result[] = [
+                'label' => $label,
+                'count' => $count,
+                'percentage' => (int) round(($count / $overall) * 100),
+            ];
+        }
+
+        return $result;
+    }
+
+    private function activeMembersCount(?int $tentId = null): int
+    {
+        $params = [];
+        $sql = "SELECT COUNT(*) FROM members WHERE active_status = 'active'";
+
+        if ($tentId !== null) {
+            $sql .= ' AND tent_id = ?';
+            $params[] = $tentId;
+        }
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+
+        return (int) $stmt->fetchColumn();
+    }
+
+    private function newMembersCount(string $dateFrom, string $dateTo, ?int $tentId = null): int
+    {
+        $params = [$dateFrom, $dateTo];
+        $sql = "SELECT COUNT(*)
+                FROM members
+                WHERE DATE(COALESCE(join_date, created_at)) BETWEEN ? AND ?";
+
+        if ($tentId !== null) {
+            $sql .= ' AND tent_id = ?';
+            $params[] = $tentId;
+        }
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+
+        return (int) $stmt->fetchColumn();
+    }
+
+    private function smsSentCount(string $dateFrom, string $dateTo, ?int $tentId = null): int
+    {
+        if (!$this->tableExists('sms_logs')) {
+            return 0;
+        }
+
+        $params = [$dateFrom, $dateTo];
+        $sql = "SELECT COALESCE(SUM(recipient_count), 0)
+                FROM sms_logs
+                WHERE DATE(created_at) BETWEEN ? AND ?
+                  AND status IN ('sent', 'simulated')";
+
+        if ($tentId !== null) {
+            $sql .= ' AND (tent_id = ? OR (tent_id IS NULL AND scope = \'bulk\'))';
+            $params[] = $tentId;
+        }
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+
+        return (int) $stmt->fetchColumn();
+    }
+
+    private function tableExists(string $table): bool
+    {
+        $stmt = $this->pdo->prepare(
+            "SELECT COUNT(*)
+             FROM information_schema.tables
+             WHERE table_schema = DATABASE()
+               AND table_name = ?"
+        );
+        $stmt->execute([$table]);
+
+        return (int) $stmt->fetchColumn() > 0;
+    }
+
+    private function tentName(int $tentId): string
+    {
+        $stmt = $this->pdo->prepare("SELECT name FROM tents WHERE id = ? LIMIT 1");
+        $stmt->execute([$tentId]);
+        $name = $stmt->fetchColumn();
+
+        return is_string($name) && $name !== '' ? $name : 'Selected Tent';
+    }
+
+    private function formatDate(string $value): string
+    {
+        $date = DateTimeImmutable::createFromFormat('Y-m-d', $value);
+
+        return $date ? $date->format('M j, Y') : $value;
     }
 
     private function normalizedDate(?string $value): ?string

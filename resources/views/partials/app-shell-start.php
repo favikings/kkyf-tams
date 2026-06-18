@@ -13,6 +13,7 @@ $navItems = [
     ['href' => '/my-tent', 'label' => 'My Tent', 'icon' => 'map-pin', 'roles' => ['Tent Admin']],
     ['href' => '/attendance', 'label' => 'Attendance', 'icon' => 'clipboard-check', 'roles' => ['Super Admin', 'Tent Admin']],
     ['href' => '/absentees', 'label' => 'Absentees', 'icon' => 'triangle-alert', 'roles' => ['Super Admin', 'Tent Admin']],
+    ['href' => '/activity-logs', 'label' => 'Activity Logs', 'icon' => 'history', 'roles' => ['Super Admin']],
     ['href' => '/reports', 'label' => 'Reports', 'icon' => 'chart-column', 'roles' => ['Super Admin', 'Tent Admin']],
     ['href' => '/birthdays', 'label' => 'Birthdays', 'icon' => 'cake', 'roles' => ['Super Admin', 'Tent Admin']],
     ['href' => '/anniversaries', 'label' => 'Anniversaries', 'icon' => 'party-popper', 'roles' => ['Super Admin', 'Tent Admin']],

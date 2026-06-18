@@ -16,16 +16,21 @@ $isSunday = $selectedType === 'sunday';
         <div>
             <div class="eyebrow">Phase 12</div>
             <h1 id="reports-title">Reports & Exports</h1>
-            <p class="lede">Review attendance performance by window, filter by tent, and export the current report to Excel or PDF.</p>
+            <p class="lede">Review attendance performance by window, filter by tent, and export to Excel or a print-ready PDF layout.</p>
         </div>
         <div class="directory-actions">
             <a class="secondary-button" href="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>/reports/export?type=<?= urlencode($selectedType) ?>&amp;tent_id=<?= $selectedTentId ?>&amp;date_from=<?= urlencode($dateFrom) ?>&amp;date_to=<?= urlencode($dateTo) ?>&amp;format=excel">
                 <i data-lucide="sheet"></i> Export Excel
             </a>
-            <a class="secondary-button" href="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>/reports/export?type=<?= urlencode($selectedType) ?>&amp;tent_id=<?= $selectedTentId ?>&amp;date_from=<?= urlencode($dateFrom) ?>&amp;date_to=<?= urlencode($dateTo) ?>&amp;format=pdf">
-                <i data-lucide="file-text"></i> Export PDF
+            <a class="secondary-button" href="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>/reports/print?type=<?= urlencode($selectedType) ?>&amp;tent_id=<?= $selectedTentId ?>&amp;date_from=<?= urlencode($dateFrom) ?>&amp;date_to=<?= urlencode($dateTo) ?>" target="_blank" rel="noreferrer">
+                <i data-lucide="printer"></i> Print / Save PDF
             </a>
         </div>
+    </div>
+
+    <div class="birthday-filter-note report-print-note">
+        <strong>Branded PDF path enabled</strong>
+        <small>Open the print layout, then use your browser's Print or Save as PDF action for the polished report design.</small>
     </div>
 
     <form class="directory-filter-card report-filter-card" method="GET" action="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>/reports">

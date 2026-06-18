@@ -6,6 +6,7 @@ use App\Core\Csrf;
 use App\Core\Redirect;
 use App\Core\View;
 use App\Middleware\RoleMiddleware;
+use App\Services\ActivityLogService;
 use App\Services\AuthService;
 use App\Services\TentService;
 use Throwable;
@@ -13,10 +14,12 @@ use Throwable;
 final class TentController
 {
     private TentService $tents;
+    private ActivityLogService $logs;
 
     public function __construct()
     {
         $this->tents = new TentService();
+        $this->logs = new ActivityLogService();
     }
 
     public function index(): string
@@ -49,7 +52,19 @@ final class TentController
         }
 
         try {
-            $this->tents->create($data);
+            $tentId = $this->tents->create($data);
+            $user = AuthService::user() ?? [];
+            $this->logs->log(
+                (int) ($user['id'] ?? 0),
+                'tent.created',
+                'tent',
+                $tentId,
+                [
+                    'name' => $data['name'],
+                    'leader_name' => $data['leader_name'],
+                    'status' => 'active',
+                ]
+            );
             $_SESSION['flash_success'] = 'Tent created.';
         } catch (Throwable $exception) {
             $_SESSION['flash_error'] = 'Unable to create tent. Check for duplicate names.';
@@ -73,7 +88,21 @@ final class TentController
         }
 
         try {
+            $existing = $this->tents->find($id);
             $this->tents->update($id, $data);
+            $user = AuthService::user() ?? [];
+            $this->logs->log(
+                (int) ($user['id'] ?? 0),
+                'tent.updated',
+                'tent',
+                $id,
+                [
+                    'name_before' => $existing['name'] ?? null,
+                    'name_after' => $data['name'],
+                    'status_after' => $data['status'],
+                    'leader_name_after' => $data['leader_name'],
+                ]
+            );
             $_SESSION['flash_success'] = 'Tent updated.';
         } catch (Throwable $exception) {
             $_SESSION['flash_error'] = 'Unable to update tent. Check for duplicate names.';
@@ -89,7 +118,18 @@ final class TentController
 
         $id = (int) ($_POST['id'] ?? 0);
         if ($id > 0) {
+            $existing = $this->tents->find($id);
             $this->tents->deactivate($id);
+            $user = AuthService::user() ?? [];
+            $this->logs->log(
+                (int) ($user['id'] ?? 0),
+                'tent.deactivated',
+                'tent',
+                $id,
+                [
+                    'name' => $existing['name'] ?? null,
+                ]
+            );
             $_SESSION['flash_success'] = 'Tent deactivated.';
         }
 
@@ -110,6 +150,18 @@ final class TentController
         }
 
         $this->tents->assignAdmin($tentId, $userId);
+        $user = AuthService::user() ?? [];
+        $tent = $this->tents->find($tentId);
+        $this->logs->log(
+            (int) ($user['id'] ?? 0),
+            'tent.admin_assigned',
+            'tent',
+            $tentId,
+            [
+                'tent_name' => $tent['name'] ?? null,
+                'assigned_user_id' => $userId,
+            ]
+        );
         $_SESSION['flash_success'] = 'Tent Admin assigned.';
 
         Redirect::to('/tents');

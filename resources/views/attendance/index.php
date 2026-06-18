@@ -39,7 +39,13 @@ $capacityPercent = $visibleCount > 0 ? min(100, (int) round(($checkedVisible / $
     <div class="attendance-layout-v2">
         <div class="attendance-main-stack">
             <section class="attendance-control-card" aria-label="Attendance controls">
-                <button class="scan-button is-disabled" type="button" disabled aria-disabled="true" title="QR and camera check-in are planned for a later phase"><i data-lucide="scan-qr-code"></i> Scan QR Code / Open Camera</button>
+                <div class="attendance-control-note">
+                    <i data-lucide="smartphone"></i>
+                    <div>
+                        <strong>Manual check-in active</strong>
+                        <small>Quick search and offline queue are ready on this device.</small>
+                    </div>
+                </div>
                 <span class="control-divider"></span>
                 <label class="toggle-control">
                     <input type="checkbox" disabled>

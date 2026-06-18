@@ -1,6 +1,7 @@
 <?php
 
 use App\Controllers\HomeController;
+use App\Controllers\ActivityLogController;
 use App\Controllers\AuthController;
 use App\Controllers\AttendanceController;
 use App\Controllers\AbsenteeController;
@@ -32,7 +33,9 @@ $router->get('/first-timers/show', [FirstTimerController::class, 'show']);
 $router->get('/attendance', [AttendanceController::class, 'index']);
 $router->get('/attendance/history', [AttendanceController::class, 'history']);
 $router->get('/absentees', [AbsenteeController::class, 'index']);
+$router->get('/activity-logs', [ActivityLogController::class, 'index']);
 $router->get('/reports', [ReportController::class, 'index']);
+$router->get('/reports/print', [ReportController::class, 'print']);
 $router->get('/reports/export', [ReportController::class, 'export']);
 $router->get('/anniversaries', [AnniversaryController::class, 'index']);
 $router->get('/birthdays', [BirthdayController::class, 'index']);

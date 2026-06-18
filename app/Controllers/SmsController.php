@@ -6,6 +6,7 @@ use App\Core\Csrf;
 use App\Core\Redirect;
 use App\Core\View;
 use App\Middleware\AuthMiddleware;
+use App\Services\ActivityLogService;
 use App\Services\AuthService;
 use App\Services\SmsService;
 use Throwable;
@@ -13,10 +14,12 @@ use Throwable;
 final class SmsController
 {
     private SmsService $sms;
+    private ActivityLogService $logs;
 
     public function __construct()
     {
         $this->sms = new SmsService();
+        $this->logs = new ActivityLogService();
     }
 
     public function index(): string
@@ -32,6 +35,7 @@ final class SmsController
             'members' => $this->sms->membersForUser($user),
             'tents' => $this->sms->tentsForUser($user),
             'logs' => $this->sms->recentLogsForUser($user),
+            'smsMode' => $this->sms->modeSummary(),
             'selectedScope' => $this->selectedScope(),
             'selectedMemberId' => (int) ($_GET['member_id'] ?? 0),
             'selectedTentId' => (int) ($_GET['tent_id'] ?? 0),
@@ -54,6 +58,18 @@ final class SmsController
 
         try {
             $this->sms->send($user, $scope, $memberId > 0 ? $memberId : null, $tentId > 0 ? $tentId : null, $message);
+            $this->logs->log(
+                (int) ($user['id'] ?? 0),
+                'sms.sent',
+                $scope === 'bulk' ? 'sms_broadcast' : $scope,
+                $scope === 'member' ? $memberId : ($scope === 'tent' ? $tentId : 'bulk'),
+                [
+                    'scope' => $scope,
+                    'member_id' => $memberId > 0 ? $memberId : null,
+                    'tent_id' => $tentId > 0 ? $tentId : null,
+                    'message_length' => strlen($message),
+                ]
+            );
             $_SESSION['flash_success'] = 'SMS request processed and logged.';
         } catch (Throwable $exception) {
             $_SESSION['flash_error'] = $exception->getMessage();

@@ -47,6 +47,7 @@ final class DashboardService
             'absentee_alerts' => $this->recentAbsenteeAlerts(),
             'recent_members' => $this->recentMembers(),
             'recent_attendance' => $this->recentAttendance(),
+            'attendance_trend' => $this->attendanceTrend(),
         ];
     }
 
@@ -67,6 +68,7 @@ final class DashboardService
             'absentee_alerts' => $this->recentAbsenteeAlerts($tentId),
             'recent_members' => $this->recentMembers($tentId),
             'recent_attendance' => $this->recentAttendance($tentId),
+            'attendance_trend' => $this->attendanceTrend($tentId),
         ];
     }
 
@@ -135,6 +137,62 @@ final class DashboardService
              WHERE YEAR(attendance_date) = YEAR(CURDATE())
                AND MONTH(attendance_date) = MONTH(CURDATE())"
         )->fetchColumn();
+    }
+
+    /**
+     * @return array<int, array{label:string,value:int,height:int}>
+     */
+    private function attendanceTrend(?int $tentId = null): array
+    {
+        $params = [];
+        $sql = "SELECT DATE_FORMAT(a.attendance_date, '%Y-%m') AS month_key,
+                       DATE_FORMAT(a.attendance_date, '%b') AS month_label,
+                       COUNT(*) AS total
+                FROM attendance a
+                JOIN members m ON m.id = a.member_id
+                WHERE a.attendance_date >= DATE_SUB(CURDATE(), INTERVAL 5 MONTH)";
+
+        if ($tentId !== null) {
+            $sql .= ' AND m.tent_id = ?';
+            $params[] = $tentId;
+        }
+
+        $sql .= " GROUP BY month_key, month_label
+                  ORDER BY month_key ASC";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        $rows = $stmt->fetchAll();
+
+        $indexed = [];
+        foreach ($rows as $row) {
+            $indexed[(string) $row['month_key']] = [
+                'label' => (string) $row['month_label'],
+                'value' => (int) $row['total'],
+            ];
+        }
+
+        $months = [];
+        $cursor = new \DateTimeImmutable('first day of this month');
+        for ($offset = 5; $offset >= 0; $offset--) {
+            $monthDate = $cursor->modify("-{$offset} months");
+            $key = $monthDate->format('Y-m');
+            $months[] = $indexed[$key] ?? [
+                'label' => $monthDate->format('M'),
+                'value' => 0,
+            ];
+        }
+
+        $maxValue = max(array_map(static fn (array $point): int => $point['value'], $months)) ?: 1;
+
+        return array_map(
+            static fn (array $point): array => [
+                'label' => $point['label'],
+                'value' => $point['value'],
+                'height' => max(14, (int) round(($point['value'] / $maxValue) * 100)),
+            ],
+            $months
+        );
     }
 
     /**

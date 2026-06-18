@@ -165,7 +165,7 @@ final class TentService
     /**
      * @param array<string, string> $data
      */
-    public function create(array $data): void
+    public function create(array $data): int
     {
         $stmt = $this->pdo->prepare(
             "INSERT INTO tents (
@@ -183,6 +183,8 @@ final class TentService
             $data['leader_phone'] ?: null,
             $data['whatsapp_link'] ?: null,
         ]);
+
+        return (int) $this->pdo->lastInsertId();
     }
 
     /**

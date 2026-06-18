@@ -6,6 +6,7 @@ use App\Core\Csrf;
 use App\Core\Redirect;
 use App\Core\View;
 use App\Middleware\AuthMiddleware;
+use App\Services\ActivityLogService;
 use App\Services\AuthService;
 use App\Services\MemberService;
 use App\Services\TentService;
@@ -15,11 +16,13 @@ final class MemberController
 {
     private MemberService $members;
     private TentService $tents;
+    private ActivityLogService $logs;
 
     public function __construct()
     {
         $this->members = new MemberService();
         $this->tents = new TentService();
+        $this->logs = new ActivityLogService();
     }
 
     public function index(): string
@@ -29,15 +32,17 @@ final class MemberController
         $user = AuthService::user() ?? [];
         $query = trim($_GET['q'] ?? '');
         $tentId = (int) ($_GET['tent_id'] ?? 0);
+        $status = trim((string) ($_GET['status'] ?? ''));
 
         return View::render('members/index', [
             'title' => 'Members',
             'user' => $user,
             'csrfToken' => Csrf::token(),
-            'members' => $this->members->search($user, $query, $tentId > 0 ? $tentId : null),
+            'members' => $this->members->search($user, $query, $tentId > 0 ? $tentId : null, $status !== '' ? $status : null),
             'tents' => $this->availableTents($user),
             'query' => $query,
             'selectedTentId' => $tentId,
+            'selectedStatus' => $status,
             'error' => $this->consumeFlash('flash_error'),
             'success' => $this->consumeFlash('flash_success'),
         ]);
@@ -116,7 +121,18 @@ final class MemberController
         }
 
         try {
-            $this->members->create($data);
+            $memberId = $this->members->create($data);
+            $this->logs->log(
+                (int) ($user['id'] ?? 0),
+                'member.created',
+                'member',
+                $memberId,
+                [
+                    'full_name' => $data['full_name'],
+                    'tent_id' => $data['tent_id'],
+                    'occupation' => $data['occupation'],
+                ]
+            );
             $_SESSION['flash_success'] = 'Member created.';
         } catch (Throwable $exception) {
             $_SESSION['flash_error'] = 'Unable to create member. Check for duplicate phone number.';
@@ -149,6 +165,19 @@ final class MemberController
 
         try {
             $this->members->update($id, $data);
+            $this->logs->log(
+                (int) ($user['id'] ?? 0),
+                'member.updated',
+                'member',
+                $id,
+                [
+                    'full_name_before' => $existing['full_name'] ?? null,
+                    'full_name_after' => $data['full_name'],
+                    'tent_id_before' => $existing['tent_id'] ?? null,
+                    'tent_id_after' => $data['tent_id'],
+                    'status_after' => $data['active_status'],
+                ]
+            );
             $_SESSION['flash_success'] = 'Member updated.';
         } catch (Throwable $exception) {
             $_SESSION['flash_error'] = 'Unable to update member. Check for duplicate phone number.';
@@ -164,9 +193,20 @@ final class MemberController
 
         $user = AuthService::user() ?? [];
         $id = (int) ($_POST['id'] ?? 0);
+        $member = $this->members->findScoped($user, $id);
 
-        if ($this->members->findScoped($user, $id) !== null) {
+        if ($member !== null) {
             $this->members->deactivate($id);
+            $this->logs->log(
+                (int) ($user['id'] ?? 0),
+                'member.deactivated',
+                'member',
+                $id,
+                [
+                    'full_name' => $member['full_name'] ?? null,
+                    'tent_id' => $member['tent_id'] ?? null,
+                ]
+            );
             $_SESSION['flash_success'] = 'Member deactivated.';
         }
 

@@ -6,6 +6,7 @@ use App\Core\Csrf;
 use App\Core\Redirect;
 use App\Core\View;
 use App\Middleware\AuthMiddleware;
+use App\Services\ActivityLogService;
 use App\Services\AttendanceService;
 use App\Services\AuthService;
 use App\Services\TentService;
@@ -15,11 +16,13 @@ final class AttendanceController
 {
     private AttendanceService $attendance;
     private TentService $tents;
+    private ActivityLogService $logs;
 
     public function __construct()
     {
         $this->attendance = new AttendanceService();
         $this->tents = new TentService();
+        $this->logs = new ActivityLogService();
     }
 
     public function index(): string
@@ -48,9 +51,21 @@ final class AttendanceController
     {
         AuthMiddleware::requireAuth();
         $this->verifyCsrf();
+        $user = AuthService::user() ?? [];
+        $memberId = (int) ($_POST['member_id'] ?? 0);
 
         try {
-            $this->attendance->checkIn(AuthService::user() ?? [], (int) ($_POST['member_id'] ?? 0));
+            $this->attendance->checkIn($user, $memberId);
+            $this->logs->log(
+                (int) ($user['id'] ?? 0),
+                'attendance.checked_in',
+                'member',
+                $memberId,
+                [
+                    'source' => 'web',
+                    'role' => $user['role'] ?? null,
+                ]
+            );
             $_SESSION['flash_success'] = 'Attendance marked.';
         } catch (RuntimeException $exception) {
             $_SESSION['flash_error'] = $exception->getMessage();
@@ -95,7 +110,23 @@ final class AttendanceController
         }
 
         $records = is_array($payload['records'] ?? null) ? $payload['records'] : [];
-        $results = $this->attendance->syncQueuedCheckIns(AuthService::user() ?? [], $records);
+        $user = AuthService::user() ?? [];
+        $results = $this->attendance->syncQueuedCheckIns($user, $records);
+        $successCount = count(array_filter($results, static fn (array $row): bool => (string) ($row['status'] ?? '') === 'success'));
+        $duplicateCount = count(array_filter($results, static fn (array $row): bool => (string) ($row['status'] ?? '') === 'duplicate'));
+        $errorCount = count(array_filter($results, static fn (array $row): bool => (string) ($row['status'] ?? '') === 'error'));
+        $this->logs->log(
+            (int) ($user['id'] ?? 0),
+            'attendance.offline_sync',
+            'attendance_queue',
+            count($records),
+            [
+                'queued_records' => count($records),
+                'synced' => $successCount,
+                'duplicates' => $duplicateCount,
+                'errors' => $errorCount,
+            ]
+        );
 
         return $this->jsonResponse([
             'ok' => true,

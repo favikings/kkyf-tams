@@ -23,7 +23,7 @@ final class MemberService
      * @param array<string, mixed> $user
      * @return array<int, array<string, mixed>>
      */
-    public function search(array $user, string $query = '', ?int $tentId = null): array
+    public function search(array $user, string $query = '', ?int $tentId = null, ?string $status = null): array
     {
         $params = [];
         $where = [];
@@ -40,6 +40,11 @@ final class MemberService
             $where[] = '(m.full_name LIKE ? OR m.phone LIKE ?)';
             $params[] = '%' . $query . '%';
             $params[] = '%' . $query . '%';
+        }
+
+        if ($status !== null && in_array($status, ['active', 'inactive'], true)) {
+            $where[] = 'm.active_status = ?';
+            $params[] = $status;
         }
 
         $sql = "SELECT m.*, t.name AS tent_name,

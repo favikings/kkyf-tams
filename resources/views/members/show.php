@@ -30,6 +30,11 @@ $badgeIcon = static function (string $badge): string {
         default => 'badge-check',
     };
 };
+$callHref = null;
+if (!empty($member['phone'])) {
+    $normalizedPhone = preg_replace('/(?!^\+)[^\d]/', '', trim((string) $member['phone'])) ?? '';
+    $callHref = $normalizedPhone !== '' ? 'tel:' . $normalizedPhone : null;
+}
 ?>
 <?php require dirname(__DIR__) . '/partials/app-shell-start.php'; ?>
 
@@ -89,6 +94,15 @@ $badgeIcon = static function (string $badge): string {
                 </dl>
 
                 <div class="dashboard-actions profile-action-row">
+                    <?php if ($callHref !== null): ?>
+                        <a class="secondary-button" href="<?= htmlspecialchars($callHref, ENT_QUOTES, 'UTF-8') ?>">
+                            <i data-lucide="phone"></i> Call Member
+                        </a>
+                    <?php else: ?>
+                        <span class="secondary-button is-disabled-inline" aria-hidden="true" title="No phone saved for call">
+                            <i data-lucide="phone"></i> Call Member
+                        </span>
+                    <?php endif; ?>
                     <a class="secondary-button" href="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>/sms?scope=member&amp;member_id=<?= (int) $member['id'] ?>">
                         <i data-lucide="messages-square"></i> Send SMS
                     </a>

@@ -4,9 +4,7 @@
 <main class="auth-shell">
     <header class="auth-topbar">
         <a href="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>/login">KKYF Portal</a>
-        <button class="auth-help-button" type="button" aria-label="Help" disabled title="Help options will be added in a later phase">
-            <i data-lucide="circle-help"></i>
-        </button>
+        <span class="auth-inline-link">Need help? Contact admin</span>
     </header>
 
     <div class="auth-stage">
@@ -51,7 +49,7 @@
                         <input type="checkbox" name="remember_me" value="1">
                         <span>Remember Me</span>
                     </label>
-                    <span class="auth-inline-link is-disabled" aria-disabled="true" title="Password recovery will be added in a later phase">Forgot Password?</span>
+                    <span class="auth-inline-link">Admin-assisted sign in</span>
                 </div>
 
                 <button type="submit"><span>Login</span><i data-lucide="arrow-right"></i></button>

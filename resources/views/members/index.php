@@ -15,6 +15,11 @@
                 default => 'badge-check',
             };
         };
+        $callHref = static function (?string $phone): ?string {
+            $normalized = preg_replace('/(?!^\+)[^\d]/', '', trim((string) $phone)) ?? '';
+
+            return $normalized !== '' ? 'tel:' . $normalized : null;
+        };
         ?>
         <div class="directory-header">
             <div>
@@ -22,7 +27,6 @@
                 <p class="lede">Manage active constituents, track attendance, and oversee Tent assignments.</p>
             </div>
             <div class="directory-actions">
-                <button class="secondary-button is-disabled" type="button" disabled aria-disabled="true" title="CSV export arrives in Phase 12."><i data-lucide="download"></i> Export CSV</button>
                 <button type="button" data-modal-open="add-member-modal"><i data-lucide="user-plus"></i> Add Member</button>
             </div>
         </div>
@@ -55,8 +59,10 @@
             <?php endif; ?>
             <label>
                 <span>Status</span>
-                <select disabled aria-disabled="true">
-                    <option>All Statuses</option>
+                <select name="status">
+                    <option value="">All Statuses</option>
+                    <option value="active" <?= ($selectedStatus ?? '') === 'active' ? 'selected' : '' ?>>Active</option>
+                    <option value="inactive" <?= ($selectedStatus ?? '') === 'inactive' ? 'selected' : '' ?>>Inactive</option>
                 </select>
             </label>
             <button type="submit"><i data-lucide="search"></i> Search</button>
@@ -130,10 +136,20 @@
                                         <?php endif; ?>
                                     </td>
                                     <td data-label="Actions">
+                                        <?php $memberCallHref = $callHref((string) ($member['phone'] ?? '')); ?>
                                         <div class="table-actions">
                                             <a class="icon-button" href="members/show?id=<?= (int) $member['id'] ?>" aria-label="View <?= htmlspecialchars($member['full_name'], ENT_QUOTES, 'UTF-8') ?>">
                                                 <i data-lucide="eye"></i>
                                             </a>
+                                            <?php if ($memberCallHref !== null): ?>
+                                                <a class="icon-button" href="<?= htmlspecialchars($memberCallHref, ENT_QUOTES, 'UTF-8') ?>" aria-label="Call <?= htmlspecialchars($member['full_name'], ENT_QUOTES, 'UTF-8') ?>">
+                                                    <i data-lucide="phone"></i>
+                                                </a>
+                                            <?php else: ?>
+                                                <span class="icon-button is-disabled-inline" title="No phone saved for call" aria-hidden="true">
+                                                    <i data-lucide="phone"></i>
+                                                </span>
+                                            <?php endif; ?>
                                             <form method="POST" action="members/deactivate">
                                                 <input type="hidden" name="_csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
                                                 <input type="hidden" name="id" value="<?= (int) $member['id'] ?>">
