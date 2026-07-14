@@ -1,0 +1,56 @@
+<?php
+
+use App\Controllers\HomeController;
+use App\Controllers\ActivityLogController;
+use App\Controllers\AuthController;
+use App\Controllers\AttendanceController;
+use App\Controllers\AbsenteeController;
+use App\Controllers\AnniversaryController;
+use App\Controllers\BirthdayController;
+use App\Controllers\DashboardController;
+use App\Controllers\FirstTimerController;
+use App\Controllers\MemberController;
+use App\Controllers\ReportController;
+use App\Controllers\SmsController;
+use App\Controllers\TentController;
+use App\Core\Router;
+
+/** @var Router $router */
+$router->get('/', [HomeController::class, 'index']);
+$router->get('/login', [AuthController::class, 'showLogin']);
+$router->post('/login', [AuthController::class, 'login']);
+$router->post('/logout', [AuthController::class, 'logout']);
+$router->get('/dashboard', [DashboardController::class, 'index']);
+$router->get('/admin', [DashboardController::class, 'admin']);
+$router->get('/unauthorized', [DashboardController::class, 'unauthorized']);
+$router->get('/tents', [TentController::class, 'index']);
+$router->get('/my-tent', [TentController::class, 'mine']);
+$router->get('/members', [MemberController::class, 'index']);
+$router->get('/members/show', [MemberController::class, 'show']);
+$router->get('/members/photo', [MemberController::class, 'photo']);
+$router->get('/first-timers', [FirstTimerController::class, 'index']);
+$router->get('/first-timers/show', [FirstTimerController::class, 'show']);
+$router->get('/attendance', [AttendanceController::class, 'index']);
+$router->get('/attendance/history', [AttendanceController::class, 'history']);
+$router->get('/absentees', [AbsenteeController::class, 'index']);
+$router->get('/activity-logs', [ActivityLogController::class, 'index']);
+$router->get('/reports', [ReportController::class, 'index']);
+$router->get('/reports/print', [ReportController::class, 'print']);
+$router->get('/reports/export', [ReportController::class, 'export']);
+$router->get('/anniversaries', [AnniversaryController::class, 'index']);
+$router->get('/birthdays', [BirthdayController::class, 'index']);
+$router->get('/sms', [SmsController::class, 'index']);
+$router->post('/tents/create', [TentController::class, 'create']);
+$router->post('/tents/update', [TentController::class, 'update']);
+$router->post('/tents/deactivate', [TentController::class, 'deactivate']);
+$router->post('/tents/assign-admin', [TentController::class, 'assignAdmin']);
+$router->post('/members/create', [MemberController::class, 'create']);
+$router->post('/members/update', [MemberController::class, 'update']);
+$router->post('/members/deactivate', [MemberController::class, 'deactivate']);
+$router->post('/first-timers/create', [FirstTimerController::class, 'create']);
+$router->post('/first-timers/update', [FirstTimerController::class, 'update']);
+$router->post('/first-timers/convert', [FirstTimerController::class, 'convert']);
+$router->post('/absentees/resolve', [AbsenteeController::class, 'resolve']);
+$router->post('/attendance/check-in', [AttendanceController::class, 'checkIn']);
+$router->post('/attendance/sync-offline', [AttendanceController::class, 'syncOffline']);
+$router->post('/sms/send', [SmsController::class, 'send']);

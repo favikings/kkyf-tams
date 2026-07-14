@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kkyf-tams-v4';
+const CACHE_NAME = 'kkyf-tams-v5';
 
 const ASSETS_TO_CACHE = [
   './',
@@ -11,33 +11,22 @@ const ASSETS_TO_CACHE = [
   './assets/images/logo.jpg'
 ];
 
-// Install Event: Cache Shell
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      console.log('[Service Worker] Caching App Shell');
-      return cache.addAll(ASSETS_TO_CACHE);
-    })
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS_TO_CACHE))
   );
   self.skipWaiting();
 });
 
-// Activate Event: Cleanup Old Caches
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keyList) => {
-      return Promise.all(keyList.map((key) => {
-        if (key !== CACHE_NAME) {
-          console.log('[Service Worker] Removing old cache', key);
-          return caches.delete(key);
-        }
-      }));
-    })
+    caches.keys().then((keyList) => Promise.all(
+      keyList.map((key) => (key !== CACHE_NAME ? caches.delete(key) : Promise.resolve()))
+    ))
   );
   self.clients.claim();
 });
 
-// Fetch Event: Network First, Fallback to Cache, Fallback to Offline Page
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') {
     return;
