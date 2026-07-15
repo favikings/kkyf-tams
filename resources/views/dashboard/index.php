@@ -18,26 +18,27 @@ if (!empty($cards[1]['value'])) {
 }
 ?>
 
-<section class="content-panel dashboard-panel dashboard-v2" aria-labelledby="dashboard-title">
-    <div class="dashboard-v2-header">
+<section class="content-panel dashboard-panel dashboard-v2 relative overflow-hidden rounded-[32px] border border-white/70 bg-white/50 px-5 py-6 shadow-panel backdrop-blur xl:px-8 xl:py-8" aria-labelledby="dashboard-title">
+    <div class="pointer-events-none absolute inset-x-0 top-0 h-40 bg-gradient-to-r from-emerald-100/70 via-white/10 to-amber-100/60"></div>
+    <div class="dashboard-v2-header relative">
         <div>
-            <div class="eyebrow"><?= $isSuperAdmin ? 'Global Command Center' : 'Localized Command Center' ?></div>
-            <h1 id="dashboard-title"><?= $isSuperAdmin ? 'Overview' : 'Tent Overview' ?></h1>
-            <p class="lede">
+            <div class="eyebrow text-emerald-800"><?= $isSuperAdmin ? 'Global Command Center' : 'Localized Command Center' ?></div>
+            <h1 class="font-display text-portal-ink" id="dashboard-title"><?= $isSuperAdmin ? 'Overview' : 'Tent Overview' ?></h1>
+            <p class="lede max-w-3xl text-portal-muted">
                 <?= $isSuperAdmin
                     ? 'Track members, tents, and Sunday attendance across the full KKYF portal.'
                     : 'Monitor member activity, attendance, and follow-up work for your assigned tent.' ?>
             </p>
         </div>
 
-        <div class="dashboard-actions">
-            <a class="secondary-button" href="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>/attendance/history"><i data-lucide="history"></i> Attendance History</a>
-            <a class="as-link" href="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>/attendance"><i data-lucide="clipboard-check"></i> Take Attendance</a>
+        <div class="dashboard-actions relative z-10">
+            <a class="secondary-button inline-flex items-center justify-center gap-2 border border-portal-line bg-white/80 px-5 text-portal-ink no-underline" href="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>/attendance/history"><i data-lucide="history"></i> Attendance History</a>
+            <a class="as-link inline-flex items-center justify-center gap-2 px-5 no-underline" href="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>/attendance"><i data-lucide="clipboard-check"></i> Take Attendance</a>
         </div>
     </div>
 
-    <div class="metric-grid metric-grid-v2">
-        <article class="metric-card kpi-card kpi-card-feature">
+    <div class="metric-grid metric-grid-v2 relative">
+        <article class="metric-card kpi-card kpi-card-feature border-0 shadow-panel">
             <div class="metric-card-top">
                 <span><?= htmlspecialchars($primaryCard['label'], ENT_QUOTES, 'UTF-8') ?></span>
                 <span class="kpi-icon"><i data-lucide="<?= htmlspecialchars($primaryCard['icon'], ENT_QUOTES, 'UTF-8') ?>"></i></span>
@@ -47,7 +48,7 @@ if (!empty($cards[1]['value'])) {
         </article>
 
         <?php foreach ($secondaryCards as $card): ?>
-            <article class="metric-card kpi-card">
+            <article class="metric-card kpi-card border border-portal-line bg-white/88 shadow-soft">
                 <div class="metric-card-top">
                     <span><?= htmlspecialchars($card['label'], ENT_QUOTES, 'UTF-8') ?></span>
                     <span class="kpi-icon"><i data-lucide="<?= htmlspecialchars($card['icon'], ENT_QUOTES, 'UTF-8') ?>"></i></span>
@@ -58,11 +59,11 @@ if (!empty($cards[1]['value'])) {
         <?php endforeach; ?>
     </div>
 
-    <div class="dashboard-layout-v2">
-        <section class="dashboard-card trend-card" aria-labelledby="attendance-trend-title">
+    <div class="dashboard-layout-v2 relative">
+        <section class="dashboard-card trend-card border border-portal-line bg-white/82 shadow-soft" aria-labelledby="attendance-trend-title">
             <div class="card-heading">
-                <h2 id="attendance-trend-title">Attendance Trends</h2>
-                <span class="soft-filter">Last 6 Months</span>
+                <h2 class="font-display text-2xl text-portal-ink" id="attendance-trend-title">Attendance Trends</h2>
+                <span class="soft-filter bg-emerald-50 text-emerald-800">Last 6 Months</span>
             </div>
             <div class="bar-chart" aria-label="Attendance trend chart">
                 <?php foreach ($trendBars as $bar): ?>
@@ -74,10 +75,10 @@ if (!empty($cards[1]['value'])) {
             </div>
         </section>
 
-        <aside class="dashboard-card alert-rail-card" aria-labelledby="dashboard-alerts-title">
+        <aside class="dashboard-card alert-rail-card border border-portal-line bg-white/82 shadow-soft" aria-labelledby="dashboard-alerts-title">
             <div>
-                <h2 id="dashboard-alerts-title"><i data-lucide="triangle-alert"></i> Absentee Alerts</h2>
-                <p class="muted">
+                <h2 class="font-display text-2xl text-portal-ink" id="dashboard-alerts-title"><i data-lucide="triangle-alert"></i> Absentee Alerts</h2>
+                <p class="muted text-portal-muted">
                     <?= $isSuperAdmin
                         ? number_format((int) ($absenteeSummary['critical_total'] ?? 0)) . ' critical and ' . number_format((int) ($absenteeSummary['open_total'] ?? 0)) . ' open alerts across KKYF.'
                         : number_format((int) ($absenteeSummary['open_total'] ?? 0)) . ' active alert(s) inside your tent follow-up queue.' ?>
@@ -100,13 +101,13 @@ if (!empty($cards[1]['value'])) {
                 <?php endforeach; ?>
             </div>
 
-            <a class="text-link alert-link" href="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>/absentees">Open absentee queue</a>
+            <a class="text-link alert-link font-bold no-underline" href="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>/absentees">Open absentee queue</a>
         </aside>
 
-        <section class="dashboard-card mini-report-card" aria-labelledby="recent-members-title">
+        <section class="dashboard-card mini-report-card border border-portal-line bg-white/82 shadow-soft" aria-labelledby="recent-members-title">
             <div class="card-heading">
-                <h2 id="recent-members-title">Recent Members</h2>
-                <a class="text-link" href="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>/members">View all</a>
+                <h2 class="font-display text-2xl text-portal-ink" id="recent-members-title">Recent Members</h2>
+                <a class="text-link font-bold no-underline" href="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>/members">View all</a>
             </div>
 
             <div class="stack-list">
@@ -130,10 +131,10 @@ if (!empty($cards[1]['value'])) {
             </div>
         </section>
 
-        <section class="dashboard-card mini-report-card" aria-labelledby="recent-attendance-title">
+        <section class="dashboard-card mini-report-card border border-portal-line bg-white/82 shadow-soft" aria-labelledby="recent-attendance-title">
             <div class="card-heading">
-                <h2 id="recent-attendance-title">Recent Attendance</h2>
-                <a class="text-link" href="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>/attendance/history">History</a>
+                <h2 class="font-display text-2xl text-portal-ink" id="recent-attendance-title">Recent Attendance</h2>
+                <a class="text-link font-bold no-underline" href="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>/attendance/history">History</a>
             </div>
 
             <div class="stack-list">
@@ -157,10 +158,10 @@ if (!empty($cards[1]['value'])) {
             </div>
         </section>
 
-        <section class="dashboard-card mini-report-card" aria-labelledby="upcoming-birthdays-title">
+        <section class="dashboard-card mini-report-card border border-portal-line bg-white/82 shadow-soft" aria-labelledby="upcoming-birthdays-title">
             <div class="card-heading">
-                <h2 id="upcoming-birthdays-title">Upcoming Birthdays</h2>
-                <span class="soft-filter">
+                <h2 class="font-display text-2xl text-portal-ink" id="upcoming-birthdays-title">Upcoming Birthdays</h2>
+                <span class="soft-filter bg-emerald-50 text-emerald-800">
                     <?= count(array_filter($upcomingBirthdays, static fn (array $birthday): bool => !empty($birthday['is_today_birthday']))) ?> today
                 </span>
             </div>
@@ -188,13 +189,13 @@ if (!empty($cards[1]['value'])) {
                     </div>
                 <?php endforeach; ?>
             </div>
-            <a class="text-link" href="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>/birthdays">View all birthdays</a>
+            <a class="text-link font-bold no-underline" href="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>/birthdays">View all birthdays</a>
         </section>
 
-        <section class="dashboard-card mini-report-card" aria-labelledby="upcoming-anniversaries-title">
+        <section class="dashboard-card mini-report-card border border-portal-line bg-white/82 shadow-soft" aria-labelledby="upcoming-anniversaries-title">
             <div class="card-heading">
-                <h2 id="upcoming-anniversaries-title">Upcoming Anniversaries</h2>
-                <span class="soft-filter">
+                <h2 class="font-display text-2xl text-portal-ink" id="upcoming-anniversaries-title">Upcoming Anniversaries</h2>
+                <span class="soft-filter bg-emerald-50 text-emerald-800">
                     <?= count(array_filter($upcomingAnniversaries, static fn (array $item): bool => !empty($item['is_today_anniversary']))) ?> today
                 </span>
             </div>
@@ -224,19 +225,19 @@ if (!empty($cards[1]['value'])) {
                     </div>
                 <?php endforeach; ?>
             </div>
-            <a class="text-link" href="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>/anniversaries">View all anniversaries</a>
+            <a class="text-link font-bold no-underline" href="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>/anniversaries">View all anniversaries</a>
         </section>
 
-        <section class="dashboard-card progress-card" aria-labelledby="capacity-title">
+        <section class="dashboard-card progress-card border border-portal-line shadow-soft" aria-labelledby="capacity-title">
             <div class="card-heading">
-                <h2 id="capacity-title"><?= $isSuperAdmin ? 'Attendance Pulse' : 'Session Summary' ?></h2>
-                <span class="soft-filter"><?= $attendancePercent ?>%</span>
+                <h2 class="font-display text-2xl text-portal-ink" id="capacity-title"><?= $isSuperAdmin ? 'Attendance Pulse' : 'Session Summary' ?></h2>
+                <span class="soft-filter bg-emerald-50 text-emerald-800"><?= $attendancePercent ?>%</span>
             </div>
             <div class="progress-meter">
                 <span style="width: <?= (int) $attendancePercent ?>%"></span>
             </div>
             <div class="progress-details">
-                <span>Today vs active members</span>
+                <span class="text-portal-muted">Today vs active members</span>
                 <strong><?= (int) ($cards[3]['value'] ?? 0) ?> checked in</strong>
             </div>
         </section>

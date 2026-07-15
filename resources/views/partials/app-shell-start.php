@@ -43,23 +43,23 @@ foreach ($navItems as $item) {
     }
 }
 ?>
-<main class="app-shell">
-    <button class="mobile-menu-button" type="button" data-sidebar-toggle aria-controls="app-sidebar" aria-expanded="false">
+<main class="app-shell bg-transparent">
+    <button class="mobile-menu-button md:!hidden" type="button" data-sidebar-toggle aria-controls="app-sidebar" aria-expanded="false">
         <i data-lucide="menu"></i>
         <span>Menu</span>
     </button>
     <div class="sidebar-backdrop" data-sidebar-close></div>
-    <div class="app-frame">
-        <aside class="sidebar" id="app-sidebar">
-            <a class="brand-mark" href="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>/dashboard">
-                <span class="brand-icon">K</span>
-                <span class="brand-title">
+    <div class="app-frame xl:grid-cols-[292px_minmax(0,1fr)]">
+        <aside class="sidebar border-r border-white/10 bg-portal-night text-white xl:px-6 xl:py-7" id="app-sidebar">
+            <a class="brand-mark text-white no-underline" href="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>/dashboard">
+                <span class="brand-icon bg-gradient-to-br from-emerald-400 to-emerald-600 text-white shadow-soft">K</span>
+                <span class="brand-title font-display tracking-[-0.03em]">
                     KKYF Admin
                     <small>Management Portal</small>
                 </span>
             </a>
 
-            <a class="sidebar-primary-action" href="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>/members">
+            <a class="sidebar-primary-action rounded-full bg-white text-portal-ink shadow-soft no-underline" href="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>/members">
                 <i data-lucide="plus"></i>
                 New Member
             </a>
@@ -68,7 +68,7 @@ foreach ($navItems as $item) {
                 <?php foreach ($navItems as $item): ?>
                     <?php if (!in_array($role, $item['roles'], true)) continue; ?>
                     <?php $isActive = $activeHref === $item['href']; ?>
-                    <a class="nav-item <?= $isActive ? 'is-active' : '' ?>" href="<?= htmlspecialchars($basePath . $item['href'], ENT_QUOTES, 'UTF-8') ?>">
+                    <a class="nav-item rounded-2xl <?= $isActive ? 'is-active' : '' ?>" href="<?= htmlspecialchars($basePath . $item['href'], ENT_QUOTES, 'UTF-8') ?>">
                         <i data-lucide="<?= htmlspecialchars($item['icon'], ENT_QUOTES, 'UTF-8') ?>"></i>
                         <?= htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8') ?>
                     </a>
@@ -83,20 +83,20 @@ foreach ($navItems as $item) {
             </div>
         </aside>
 
-        <div class="main-area">
-            <nav class="topbar" aria-label="Page context">
-                <div class="topbar-title">
-                    <strong><?= htmlspecialchars($pageTitle, ENT_QUOTES, 'UTF-8') ?></strong>
-                    <span><?= htmlspecialchars($role, ENT_QUOTES, 'UTF-8') ?> workspace</span>
+        <div class="main-area bg-transparent xl:px-9 xl:py-8">
+            <nav class="topbar rounded-[28px] border border-white/70 bg-white/80 shadow-soft backdrop-blur md:grid md:grid-cols-[minmax(0,1fr)_minmax(260px,430px)_auto]" aria-label="Page context">
+                <div class="topbar-title min-w-0">
+                    <strong class="font-display text-[1.45rem] font-semibold tracking-[-0.03em] text-portal-ink"><?= htmlspecialchars($pageTitle, ENT_QUOTES, 'UTF-8') ?></strong>
+                    <span class="text-[0.72rem] font-bold uppercase tracking-[0.22em] text-portal-muted"><?= htmlspecialchars($role, ENT_QUOTES, 'UTF-8') ?> workspace</span>
                 </div>
                 <form class="topbar-search" method="GET" action="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>/members">
                     <i data-lucide="search"></i>
-                    <input type="search" name="q" placeholder="Search members..." aria-label="Search members">
+                    <input class="border border-portal-line bg-white/90 text-portal-ink shadow-none" type="search" name="q" placeholder="Search members..." aria-label="Search members">
                 </form>
                 <div class="topbar-actions">
-                    <button class="topbar-icon" type="button" aria-label="Notifications"><i data-lucide="bell"></i></button>
-                    <button class="topbar-icon" type="button" aria-label="Help"><i data-lucide="circle-help"></i></button>
-                    <div class="user-avatar" title="<?= htmlspecialchars($user['full_name'] ?? 'User', ENT_QUOTES, 'UTF-8') ?>">
+                    <button class="topbar-icon border border-portal-line bg-portal-mist text-portal-ink" type="button" aria-label="Notifications"><i data-lucide="bell"></i></button>
+                    <button class="topbar-icon border border-portal-line bg-portal-mist text-portal-ink" type="button" aria-label="Help"><i data-lucide="circle-help"></i></button>
+                    <div class="user-avatar bg-gradient-to-br from-portal-night to-emerald-800 text-white" title="<?= htmlspecialchars($user['full_name'] ?? 'User', ENT_QUOTES, 'UTF-8') ?>">
                         <?= htmlspecialchars(strtoupper(substr($user['full_name'] ?? 'U', 0, 1)), ENT_QUOTES, 'UTF-8') ?>
                     </div>
                 </div>
