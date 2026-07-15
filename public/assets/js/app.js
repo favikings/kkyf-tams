@@ -13,13 +13,17 @@ window.addEventListener('DOMContentLoaded', () => {
     const appShell = document.querySelector('.app-shell');
     const sidebarToggle = document.querySelector('[data-sidebar-toggle]');
     const sidebarClose = document.querySelector('[data-sidebar-close]');
+    const portalSidebar = document.querySelector('[data-portal-sidebar]');
+    const portalBackdrop = document.querySelector('[data-portal-backdrop]');
 
     const setSidebar = (open) => {
-        if (!appShell || !sidebarToggle) {
+        if (!appShell || !sidebarToggle || !portalSidebar) {
             return;
         }
 
         appShell.classList.toggle('is-sidebar-open', open);
+        portalSidebar.classList.toggle('-translate-x-full', !open);
+        portalBackdrop?.classList.toggle('hidden', !open);
         sidebarToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
         document.body.style.overflow = open ? 'hidden' : '';
     };
@@ -34,7 +38,7 @@ window.addEventListener('DOMContentLoaded', () => {
         sidebarClose.addEventListener('click', () => setSidebar(false));
     }
 
-    document.querySelectorAll('.sidebar a').forEach((link) => {
+    document.querySelectorAll('[data-sidebar-nav] a').forEach((link) => {
         link.addEventListener('click', () => setSidebar(false));
     });
 
