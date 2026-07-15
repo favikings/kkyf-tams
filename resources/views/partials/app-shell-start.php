@@ -5,6 +5,7 @@ if ($basePath !== '' && str_starts_with($currentPath, $basePath)) {
     $currentPath = substr($currentPath, strlen($basePath)) ?: '/';
 }
 $role = $user['role'] ?? 'Guest';
+$pageTitle = $title ?? 'KKYF Portal';
 $navItems = [
     ['href' => '/dashboard', 'label' => 'Dashboard', 'icon' => 'layout-dashboard', 'roles' => ['Super Admin', 'Tent Admin']],
     ['href' => '/members', 'label' => 'Members', 'icon' => 'users', 'roles' => ['Super Admin', 'Tent Admin']],
@@ -84,6 +85,10 @@ foreach ($navItems as $item) {
 
         <div class="main-area">
             <nav class="topbar" aria-label="Page context">
+                <div class="topbar-title">
+                    <strong><?= htmlspecialchars($pageTitle, ENT_QUOTES, 'UTF-8') ?></strong>
+                    <span><?= htmlspecialchars($role, ENT_QUOTES, 'UTF-8') ?> workspace</span>
+                </div>
                 <form class="topbar-search" method="GET" action="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>/members">
                     <i data-lucide="search"></i>
                     <input type="search" name="q" placeholder="Search members..." aria-label="Search members">
