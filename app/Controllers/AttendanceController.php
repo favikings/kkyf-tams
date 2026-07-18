@@ -9,6 +9,7 @@ use App\Middleware\AuthMiddleware;
 use App\Services\ActivityLogService;
 use App\Services\AttendanceService;
 use App\Services\AuthService;
+use App\Services\NotificationService;
 use App\Services\TentService;
 use RuntimeException;
 
@@ -17,12 +18,14 @@ final class AttendanceController
     private AttendanceService $attendance;
     private TentService $tents;
     private ActivityLogService $logs;
+    private NotificationService $notifications;
 
     public function __construct()
     {
         $this->attendance = new AttendanceService();
         $this->tents = new TentService();
         $this->logs = new ActivityLogService();
+        $this->notifications = new NotificationService();
     }
 
     public function index(): string
@@ -70,6 +73,21 @@ final class AttendanceController
                     'source' => 'web',
                     'role' => $user['role'] ?? null,
                 ]
+            );
+            $this->notifications->notifyAllUsers(
+                $user,
+                'attendance.checked_in',
+                'attendance',
+                'Attendance updated',
+                trim((string) ($user['full_name'] ?? 'A user')) . ' marked a member present for today\'s attendance.',
+                '/attendance/history',
+                'member',
+                $memberId,
+                [
+                    'member_id' => $memberId,
+                    'source' => 'web',
+                ],
+                'attendance:' . date('Y-m-d') . ':member:' . $memberId
             );
             $_SESSION['flash_success'] = 'Attendance marked.';
         } catch (RuntimeException $exception) {
@@ -132,6 +150,25 @@ final class AttendanceController
                 'errors' => $errorCount,
             ]
         );
+        if ($successCount > 0) {
+            $this->notifications->notifyAllUsers(
+                $user,
+                'attendance.offline_sync',
+                'attendance',
+                'Offline attendance synced',
+                trim((string) ($user['full_name'] ?? 'A user')) . ' synced ' . $successCount . ' offline attendance record' . ($successCount === 1 ? '' : 's') . '.',
+                '/attendance/history',
+                'attendance_queue',
+                count($records),
+                [
+                    'queued_records' => count($records),
+                    'synced' => $successCount,
+                    'duplicates' => $duplicateCount,
+                    'errors' => $errorCount,
+                ],
+                'attendance-sync:' . date('Y-m-d-H') . ':user:' . (int) ($user['id'] ?? 0) . ':records:' . count($records)
+            );
+        }
 
         return $this->jsonResponse([
             'ok' => true,

@@ -8,6 +8,7 @@ use App\Core\View;
 use App\Middleware\AuthMiddleware;
 use App\Services\ActivityLogService;
 use App\Services\AuthService;
+use App\Services\NotificationService;
 use App\Services\SmsService;
 use Throwable;
 
@@ -15,11 +16,13 @@ final class SmsController
 {
     private SmsService $sms;
     private ActivityLogService $logs;
+    private NotificationService $notifications;
 
     public function __construct()
     {
         $this->sms = new SmsService();
         $this->logs = new ActivityLogService();
+        $this->notifications = new NotificationService();
     }
 
     public function index(): string
@@ -69,6 +72,23 @@ final class SmsController
                     'tent_id' => $tentId > 0 ? $tentId : null,
                     'message_length' => strlen($message),
                 ]
+            );
+            $title = $scope === 'bulk' ? 'Super admin message sent' : 'Portal message sent';
+            $body = trim((string) ($user['full_name'] ?? 'An admin')) . ' sent a ' . ($scope === 'bulk' ? 'portal-wide' : $scope) . ' message.';
+            $this->notifications->notifyAllUsers(
+                $user,
+                'sms.sent',
+                'message',
+                $title,
+                $body,
+                '/sms',
+                $scope === 'bulk' ? 'sms_broadcast' : $scope,
+                $scope === 'member' ? $memberId : ($scope === 'tent' ? $tentId : 'bulk'),
+                [
+                    'scope' => $scope,
+                    'message_length' => strlen($message),
+                ],
+                'sms:' . $scope . ':' . date('Y-m-d-H-i-s') . ':user:' . (int) ($user['id'] ?? 0)
             );
             $_SESSION['flash_success'] = 'SMS request processed and logged.';
         } catch (Throwable $exception) {

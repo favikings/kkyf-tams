@@ -81,14 +81,17 @@ foreach ($navItems as $item) {
         </aside>
 
         <div class="min-w-0 px-4 pb-8 pt-4 xl:ml-[292px] xl:px-8 xl:py-8">
-            <nav class="mx-auto grid w-full max-w-[1280px] gap-4 rounded-lg border border-white/70 bg-white/82 px-5 py-5 shadow-soft backdrop-blur xl:grid-cols-[minmax(0,1fr)_minmax(280px,440px)_auto] xl:items-center" aria-label="Page context">
+            <nav class="relative mx-auto grid w-full max-w-[1280px] gap-4 rounded-lg border border-white/70 bg-white/82 px-5 py-5 shadow-soft backdrop-blur xl:grid-cols-[minmax(0,1fr)_minmax(280px,440px)_auto] xl:items-center" aria-label="Page context">
                 <div class="flex items-center justify-between gap-3 xl:hidden">
                     <button class="inline-flex h-11 items-center gap-2 rounded-lg border border-[#d7dfd6] bg-white px-3 text-sm font-bold text-portal-ink shadow-sm" type="button" data-sidebar-toggle aria-controls="app-sidebar" aria-expanded="false">
                         <i data-lucide="menu"></i>
                         <span>Menu</span>
                     </button>
                     <div class="flex items-center justify-end gap-3">
-                        <button class="inline-grid h-11 w-11 place-items-center rounded-full border border-[#d7dfd6] bg-[#f7f3ea] text-portal-ink transition hover:bg-white" type="button" aria-label="Notifications"><i data-lucide="bell"></i></button>
+                        <button class="relative inline-grid h-11 w-11 place-items-center rounded-full border border-[#d7dfd6] bg-[#f7f3ea] text-portal-ink transition hover:bg-white" type="button" aria-label="Notifications" data-notification-toggle>
+                            <i data-lucide="bell"></i>
+                            <span class="absolute -right-1 -top-1 hidden min-h-5 min-w-5 items-center justify-center rounded-full bg-emerald-600 px-1 text-[10px] font-extrabold text-white" data-notification-badge></span>
+                        </button>
                         <button class="inline-grid h-11 w-11 place-items-center rounded-full border border-[#d7dfd6] bg-[#f7f3ea] text-portal-ink transition hover:bg-white" type="button" aria-label="Help"><i data-lucide="circle-help"></i></button>
                         <div class="grid h-11 w-11 place-items-center rounded-full bg-gradient-to-br from-[#102017] to-emerald-800 text-sm font-bold text-white shadow-soft" title="<?= htmlspecialchars($user['full_name'] ?? 'User', ENT_QUOTES, 'UTF-8') ?>">
                             <?= htmlspecialchars(strtoupper(substr($user['full_name'] ?? 'U', 0, 1)), ENT_QUOTES, 'UTF-8') ?>
@@ -104,12 +107,44 @@ foreach ($navItems as $item) {
                     <input class="h-12 w-full rounded-full border border-[#d7dfd6] bg-[#fcfbf8] pl-12 pr-4 text-sm text-portal-ink outline-none ring-0 placeholder:text-portal-muted/75 focus:border-emerald-500" type="search" name="q" placeholder="Search members..." aria-label="Search members">
                 </form>
                 <div class="hidden items-center justify-end gap-3 xl:flex">
-                    <button class="inline-grid h-11 w-11 place-items-center rounded-full border border-[#d7dfd6] bg-[#f7f3ea] text-portal-ink transition hover:bg-white" type="button" aria-label="Notifications"><i data-lucide="bell"></i></button>
+                    <button class="relative inline-grid h-11 w-11 place-items-center rounded-full border border-[#d7dfd6] bg-[#f7f3ea] text-portal-ink transition hover:bg-white" type="button" aria-label="Notifications" data-notification-toggle>
+                        <i data-lucide="bell"></i>
+                        <span class="absolute -right-1 -top-1 hidden min-h-5 min-w-5 items-center justify-center rounded-full bg-emerald-600 px-1 text-[10px] font-extrabold text-white" data-notification-badge></span>
+                    </button>
                     <button class="inline-grid h-11 w-11 place-items-center rounded-full border border-[#d7dfd6] bg-[#f7f3ea] text-portal-ink transition hover:bg-white" type="button" aria-label="Help"><i data-lucide="circle-help"></i></button>
                     <div class="grid h-11 w-11 place-items-center rounded-full bg-gradient-to-br from-[#102017] to-emerald-800 text-sm font-bold text-white shadow-soft" title="<?= htmlspecialchars($user['full_name'] ?? 'User', ENT_QUOTES, 'UTF-8') ?>">
                         <?= htmlspecialchars(strtoupper(substr($user['full_name'] ?? 'U', 0, 1)), ENT_QUOTES, 'UTF-8') ?>
                     </div>
                 </div>
+                <section
+                    class="absolute right-4 top-[calc(100%+0.75rem)] z-40 hidden w-[min(92vw,24rem)] overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-[0_20px_60px_rgba(15,23,42,0.18)]"
+                    data-notification-root
+                    data-notification-feed-url="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>/notifications"
+                    data-notification-read-url="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>/notifications/read"
+                    data-notification-read-all-url="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>/notifications/read-all"
+                    data-csrf-token="<?= htmlspecialchars($csrfToken ?? '', ENT_QUOTES, 'UTF-8') ?>"
+                >
+                    <div class="border-b border-slate-200 bg-slate-50/80 px-4 py-4">
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <h2 class="text-sm font-extrabold uppercase tracking-[0.16em] text-slate-700">Notifications</h2>
+                                <p class="mt-1 text-sm text-slate-500">Activity, reminders, and follow-up updates.</p>
+                            </div>
+                            <span class="inline-flex min-h-7 items-center rounded-full bg-emerald-50 px-3 text-xs font-bold text-emerald-700" data-notification-unread-label>0 unread</span>
+                        </div>
+                        <div class="mt-3 flex flex-wrap gap-2">
+                            <button type="button" class="inline-flex min-h-9 items-center justify-center rounded-full border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700" data-notification-enable-browser>
+                                Enable browser alerts
+                            </button>
+                            <button type="button" class="inline-flex min-h-9 items-center justify-center rounded-full border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700" data-notification-read-all>
+                                Mark all read
+                            </button>
+                        </div>
+                    </div>
+                    <div class="max-h-[26rem] overflow-y-auto" data-notification-list>
+                        <div class="px-4 py-6 text-sm text-slate-500" data-notification-empty>Loading notifications...</div>
+                    </div>
+                </section>
             </nav>
             <section class="fixed bottom-4 left-4 right-4 z-30 hidden gap-4 rounded-[28px] border border-emerald-200/60 bg-white/92 px-4 py-4 shadow-panel backdrop-blur md:left-auto md:w-[430px] md:grid-cols-[minmax(0,1fr)_auto]" data-pwa-install-banner hidden aria-label="Install app prompt">
                 <div class="grid gap-1 min-w-0">

@@ -147,9 +147,318 @@ window.addEventListener('DOMContentLoaded', () => {
         setupOfflineAttendance(offlineAttendanceRoot);
     }
 
+    setupNotifications(basePath);
     setupPwaInstallPrompt();
     setupDashboardAttendanceChart();
 });
+
+function setupNotifications(basePath) {
+    const root = document.querySelector('[data-notification-root]');
+    const toggles = document.querySelectorAll('[data-notification-toggle]');
+    const badges = document.querySelectorAll('[data-notification-badge]');
+
+    if (!root || toggles.length === 0) {
+        return;
+    }
+
+    const list = root.querySelector('[data-notification-list]');
+    const empty = root.querySelector('[data-notification-empty]');
+    const unreadLabel = root.querySelector('[data-notification-unread-label]');
+    const readAllButton = root.querySelector('[data-notification-read-all]');
+    const enableBrowserButton = root.querySelector('[data-notification-enable-browser]');
+    const feedUrl = root.getAttribute('data-notification-feed-url') || `${basePath}/notifications`;
+    const readUrl = root.getAttribute('data-notification-read-url') || `${basePath}/notifications/read`;
+    const readAllUrl = root.getAttribute('data-notification-read-all-url') || `${basePath}/notifications/read-all`;
+    const csrfToken = root.getAttribute('data-csrf-token') || '';
+    const browserPrefKey = 'kkyf-browser-notifications-enabled';
+    const seenKey = 'kkyf-last-notification-id';
+    let isOpen = false;
+    let hasLoaded = false;
+    let pollTimer = null;
+
+    const closePanel = () => {
+        isOpen = false;
+        root.classList.add('hidden');
+    };
+
+    const openPanel = () => {
+        isOpen = true;
+        root.classList.remove('hidden');
+        fetchFeed(true);
+    };
+
+    const setBadges = (count) => {
+        badges.forEach((badge) => {
+            if (!badge) {
+                return;
+            }
+
+            if (count > 0) {
+                badge.textContent = count > 99 ? '99+' : String(count);
+                badge.classList.remove('hidden');
+                badge.classList.add('inline-flex');
+            } else {
+                badge.textContent = '';
+                badge.classList.add('hidden');
+                badge.classList.remove('inline-flex');
+            }
+        });
+
+        if (unreadLabel) {
+            unreadLabel.textContent = `${count} unread`;
+        }
+    };
+
+    const browserEnabled = () => window.localStorage.getItem(browserPrefKey) === 'yes';
+
+    const updateBrowserButton = () => {
+        if (!enableBrowserButton) {
+            return;
+        }
+
+        if (!('Notification' in window)) {
+            enableBrowserButton.textContent = 'Browser alerts unavailable';
+            enableBrowserButton.setAttribute('disabled', 'disabled');
+            enableBrowserButton.classList.add('opacity-50');
+            return;
+        }
+
+        if (Notification.permission === 'granted' && browserEnabled()) {
+            enableBrowserButton.textContent = 'Browser alerts enabled';
+            return;
+        }
+
+        enableBrowserButton.textContent = 'Enable browser alerts';
+    };
+
+    const showBrowserNotifications = async (items) => {
+        if (!browserEnabled() || !('Notification' in window) || Notification.permission !== 'granted') {
+            return;
+        }
+
+        const seenValue = Number.parseInt(window.localStorage.getItem(seenKey) || '0', 10) || 0;
+        const fresh = [...items]
+            .filter((item) => Number(item.id || 0) > seenValue)
+            .sort((left, right) => Number(left.id || 0) - Number(right.id || 0));
+
+        if (fresh.length === 0) {
+            return;
+        }
+
+        const latestId = Number(fresh[fresh.length - 1].id || 0);
+        window.localStorage.setItem(seenKey, String(latestId));
+
+        for (const item of fresh.slice(-3)) {
+            const title = item.title || 'KKYF Notification';
+            const notificationUrl = item.link_url ? `${basePath}${item.link_url}`.replace(`${basePath}${basePath}`, `${basePath}`) : '';
+            const options = {
+                body: item.message || '',
+                data: {
+                    url: notificationUrl,
+                },
+                tag: `kkyf-notification-${item.id}`,
+            };
+
+            if (navigator.serviceWorker) {
+                const registration = await navigator.serviceWorker.getRegistration();
+                if (registration) {
+                    registration.showNotification(title, options).catch(() => {
+                        new Notification(title, options);
+                    });
+                    continue;
+                }
+            }
+
+            new Notification(title, options);
+        }
+    };
+
+    const renderItems = (items) => {
+        if (!list || !empty) {
+            return;
+        }
+
+        if (!items.length) {
+            empty.textContent = 'No notifications yet.';
+            list.innerHTML = '';
+            list.appendChild(empty);
+            return;
+        }
+
+        list.innerHTML = items.map((item) => {
+            const unreadClass = item.is_unread ? 'border-l-4 border-emerald-500 bg-emerald-50/55' : 'border-l-4 border-transparent bg-white';
+            const actionButton = item.is_unread
+                ? `<button type="button" class="inline-flex min-h-8 items-center justify-center rounded-full border border-slate-200 bg-white px-3 text-[11px] font-bold text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700" data-notification-read-id="${String(item.id)}">Mark read</button>`
+                : '';
+            const openLink = item.link_url
+                ? `<a class="inline-flex min-h-8 items-center justify-center rounded-full bg-[#013f26] px-3 text-[11px] font-bold text-white no-underline" href="${escapeHtml(`${basePath}${item.link_url}`.replace(`${basePath}${basePath}`, `${basePath}`))}">Open</a>`
+                : '';
+
+            return `
+                <article class="${unreadClass} px-4 py-4">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <h3 class="text-sm font-bold text-slate-900">${escapeHtml(item.title || 'Notification')}</h3>
+                            <p class="mt-1 text-sm leading-6 text-slate-600">${escapeHtml(item.message || '')}</p>
+                            <div class="mt-2 flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500">
+                                <span class="inline-flex min-h-7 items-center rounded-full bg-slate-100 px-2.5">${escapeHtml(item.category || 'activity')}</span>
+                                <span>${escapeHtml(item.created_at_human || '')}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3 flex flex-wrap gap-2">
+                        ${openLink}
+                        ${actionButton}
+                    </div>
+                </article>
+            `;
+        }).join('');
+    };
+
+    const fetchFeed = async (interactive = false) => {
+        try {
+            const response = await fetch(feedUrl, {
+                headers: {
+                    'Accept': 'application/json',
+                },
+                credentials: 'same-origin',
+            });
+
+            if (!response.ok) {
+                throw new Error('Unable to load notifications.');
+            }
+
+            const payload = await response.json();
+            const items = Array.isArray(payload.items) ? payload.items : [];
+            const unreadCount = Number(payload.unread_count || 0);
+
+            renderItems(items);
+            setBadges(unreadCount);
+
+            if (hasLoaded) {
+                showBrowserNotifications(items.filter((item) => item.is_unread)).catch(() => {});
+            } else if (items.length > 0) {
+                const latestId = Number(items[0].id || 0);
+                if (latestId > 0 && !window.localStorage.getItem(seenKey)) {
+                    window.localStorage.setItem(seenKey, String(latestId));
+                }
+            }
+
+            hasLoaded = true;
+        } catch (error) {
+            if (interactive && empty) {
+                empty.textContent = 'Unable to load notifications right now.';
+            }
+        }
+    };
+
+    const postAction = async (url, body) => {
+        const response = await fetch(url, {
+            method: 'POST',
+            body,
+            credentials: 'same-origin',
+            headers: {
+                'Accept': 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error('Request failed.');
+        }
+
+        return response.json();
+    };
+
+    toggles.forEach((toggle) => {
+        toggle.addEventListener('click', (event) => {
+            event.stopPropagation();
+            if (isOpen) {
+                closePanel();
+            } else {
+                openPanel();
+            }
+        });
+    });
+
+    document.addEventListener('click', (event) => {
+        if (isOpen && !root.contains(event.target)) {
+            closePanel();
+        }
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && isOpen) {
+            closePanel();
+        }
+    });
+
+    root.addEventListener('click', async (event) => {
+        const readButton = event.target.closest('[data-notification-read-id]');
+        if (readButton) {
+            const formData = new FormData();
+            formData.append('_csrf_token', csrfToken);
+            formData.append('id', readButton.getAttribute('data-notification-read-id') || '0');
+
+            try {
+                const payload = await postAction(readUrl, formData);
+                renderItems(Array.isArray(payload.items) ? payload.items : []);
+                setBadges(Number(payload.unread_count || 0));
+            } catch (error) {
+                // Ignore inline action failure.
+            }
+        }
+    });
+
+    if (readAllButton) {
+        readAllButton.addEventListener('click', async () => {
+            const formData = new FormData();
+            formData.append('_csrf_token', csrfToken);
+
+            try {
+                const payload = await postAction(readAllUrl, formData);
+                renderItems(Array.isArray(payload.items) ? payload.items : []);
+                setBadges(Number(payload.unread_count || 0));
+            } catch (error) {
+                // Ignore inline action failure.
+            }
+        });
+    }
+
+    if (enableBrowserButton) {
+        enableBrowserButton.addEventListener('click', async () => {
+            if (!('Notification' in window)) {
+                return;
+            }
+
+            const permission = await Notification.requestPermission();
+            if (permission === 'granted') {
+                window.localStorage.setItem(browserPrefKey, 'yes');
+            }
+            updateBrowserButton();
+        });
+    }
+
+    updateBrowserButton();
+    fetchFeed(false);
+    pollTimer = window.setInterval(() => {
+        fetchFeed(false);
+    }, 60000);
+
+    window.addEventListener('beforeunload', () => {
+        if (pollTimer) {
+            window.clearInterval(pollTimer);
+        }
+    });
+}
+
+function escapeHtml(value) {
+    return String(value)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+}
 
 function setupDashboardAttendanceChart() {
     const canvas = document.getElementById('dashboardAttendanceChart');

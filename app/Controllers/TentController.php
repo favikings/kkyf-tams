@@ -8,6 +8,7 @@ use App\Core\View;
 use App\Middleware\RoleMiddleware;
 use App\Services\ActivityLogService;
 use App\Services\AuthService;
+use App\Services\NotificationService;
 use App\Services\TentService;
 use Throwable;
 
@@ -15,11 +16,13 @@ final class TentController
 {
     private TentService $tents;
     private ActivityLogService $logs;
+    private NotificationService $notifications;
 
     public function __construct()
     {
         $this->tents = new TentService();
         $this->logs = new ActivityLogService();
+        $this->notifications = new NotificationService();
     }
 
     public function index(): string
@@ -66,6 +69,20 @@ final class TentController
                     'status' => 'active',
                 ]
             );
+            $this->notifications->notifyAllUsers(
+                $user,
+                'tent.created',
+                'tent',
+                'New tent created',
+                trim((string) ($data['name'] ?? 'A tent')) . ' has been created in the portal.',
+                '/tents',
+                'tent',
+                $tentId,
+                [
+                    'tent_name' => $data['name'],
+                ],
+                'tent-created:' . $tentId
+            );
             $_SESSION['flash_success'] = 'Tent created.';
         } catch (Throwable $exception) {
             $_SESSION['flash_error'] = 'Unable to create tent. Check for duplicate names.';
@@ -104,6 +121,21 @@ final class TentController
                     'leader_name_after' => $data['leader_name'],
                 ]
             );
+            $this->notifications->notifyAllUsers(
+                $user,
+                'tent.updated',
+                'tent',
+                'Tent updated',
+                trim((string) ($data['name'] ?? 'A tent')) . ' was updated by ' . trim((string) ($user['full_name'] ?? 'an admin')) . '.',
+                '/tents',
+                'tent',
+                $id,
+                [
+                    'tent_name' => $data['name'],
+                    'status' => $data['status'],
+                ],
+                'tent-updated:' . $id . ':' . date('Y-m-d-H-i-s')
+            );
             $_SESSION['flash_success'] = 'Tent updated.';
         } catch (Throwable $exception) {
             $_SESSION['flash_error'] = 'Unable to update tent. Check for duplicate names.';
@@ -130,6 +162,20 @@ final class TentController
                 [
                     'name' => $existing['name'] ?? null,
                 ]
+            );
+            $this->notifications->notifyAllUsers(
+                $user,
+                'tent.deactivated',
+                'tent',
+                'Tent deactivated',
+                trim((string) ($existing['name'] ?? 'A tent')) . ' was deactivated.',
+                '/tents',
+                'tent',
+                $id,
+                [
+                    'tent_name' => $existing['name'] ?? null,
+                ],
+                'tent-deactivated:' . $id
             );
             $_SESSION['flash_success'] = 'Tent deactivated.';
         }
@@ -162,6 +208,21 @@ final class TentController
                 'tent_name' => $tent['name'] ?? null,
                 'assigned_user_id' => $userId,
             ]
+        );
+        $this->notifications->notifyAllUsers(
+            $user,
+            'tent.admin_assigned',
+            'tent',
+            'Tent admin assigned',
+            'A tent admin assignment was updated for ' . trim((string) ($tent['name'] ?? 'a tent')) . '.',
+            '/tents',
+            'tent',
+            $tentId,
+            [
+                'tent_name' => $tent['name'] ?? null,
+                'assigned_user_id' => $userId,
+            ],
+            'tent-admin:' . $tentId . ':' . $userId
         );
         $_SESSION['flash_success'] = 'Tent Admin assigned.';
 

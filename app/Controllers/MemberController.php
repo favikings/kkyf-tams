@@ -9,6 +9,7 @@ use App\Middleware\AuthMiddleware;
 use App\Services\ActivityLogService;
 use App\Services\AuthService;
 use App\Services\MemberService;
+use App\Services\NotificationService;
 use App\Services\TentService;
 use Throwable;
 
@@ -17,12 +18,14 @@ final class MemberController
     private MemberService $members;
     private TentService $tents;
     private ActivityLogService $logs;
+    private NotificationService $notifications;
 
     public function __construct()
     {
         $this->members = new MemberService();
         $this->tents = new TentService();
         $this->logs = new ActivityLogService();
+        $this->notifications = new NotificationService();
     }
 
     public function index(): string
@@ -133,6 +136,21 @@ final class MemberController
                     'occupation' => $data['occupation'],
                 ]
             );
+            $this->notifications->notifyAllUsers(
+                $user,
+                'member.created',
+                'member',
+                'New member added',
+                trim((string) ($data['full_name'] ?? 'A member')) . ' was added to the member directory.',
+                '/members/show?id=' . $memberId,
+                'member',
+                $memberId,
+                [
+                    'full_name' => $data['full_name'],
+                    'tent_id' => $data['tent_id'],
+                ],
+                'member-created:' . $memberId
+            );
             $_SESSION['flash_success'] = 'Member created.';
         } catch (Throwable $exception) {
             $_SESSION['flash_error'] = 'Unable to create member. Check for duplicate phone number.';
@@ -178,6 +196,40 @@ final class MemberController
                     'status_after' => $data['active_status'],
                 ]
             );
+            $this->notifications->notifyAllUsers(
+                $user,
+                'member.updated',
+                'member',
+                'Member record updated',
+                trim((string) ($data['full_name'] ?? 'A member')) . '\'s profile was updated.',
+                '/members/show?id=' . $id,
+                'member',
+                $id,
+                [
+                    'full_name' => $data['full_name'],
+                    'tent_id' => $data['tent_id'],
+                    'status' => $data['active_status'],
+                ],
+                'member-updated:' . $id . ':' . date('Y-m-d-H-i-s')
+            );
+            $notesBefore = trim((string) ($existing['notes'] ?? ''));
+            $notesAfter = trim((string) ($data['notes'] ?? ''));
+            if ($notesAfter !== '' && $notesAfter !== $notesBefore) {
+                $this->notifications->notifyAllUsers(
+                    $user,
+                    'member.notes_updated',
+                    'follow_up',
+                    'Member notes updated',
+                    trim((string) ($data['full_name'] ?? 'A member')) . ' has updated follow-up notes in the member profile.',
+                    '/members/show?id=' . $id,
+                    'member',
+                    $id,
+                    [
+                        'full_name' => $data['full_name'],
+                    ],
+                    'member-notes:' . $id . ':' . md5($notesAfter)
+                );
+            }
             $_SESSION['flash_success'] = 'Member updated.';
         } catch (Throwable $exception) {
             $_SESSION['flash_error'] = 'Unable to update member. Check for duplicate phone number.';
@@ -206,6 +258,20 @@ final class MemberController
                     'full_name' => $member['full_name'] ?? null,
                     'tent_id' => $member['tent_id'] ?? null,
                 ]
+            );
+            $this->notifications->notifyAllUsers(
+                $user,
+                'member.deactivated',
+                'member',
+                'Member deactivated',
+                trim((string) ($member['full_name'] ?? 'A member')) . ' was deactivated.',
+                '/members',
+                'member',
+                $id,
+                [
+                    'full_name' => $member['full_name'] ?? null,
+                ],
+                'member-deactivated:' . $id
             );
             $_SESSION['flash_success'] = 'Member deactivated.';
         }

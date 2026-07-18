@@ -8,18 +8,24 @@ use App\Core\View;
 use App\Middleware\AuthMiddleware;
 use App\Services\AuthService;
 use App\Services\FirstTimerService;
+use App\Services\NotificationService;
 use App\Services\TentService;
+use App\Services\ActivityLogService;
 use Throwable;
 
 final class FirstTimerController
 {
     private FirstTimerService $firstTimers;
     private TentService $tents;
+    private ActivityLogService $logs;
+    private NotificationService $notifications;
 
     public function __construct()
     {
         $this->firstTimers = new FirstTimerService();
         $this->tents = new TentService();
+        $this->logs = new ActivityLogService();
+        $this->notifications = new NotificationService();
     }
 
     public function index(): string
@@ -83,6 +89,32 @@ final class FirstTimerController
 
         try {
             $this->firstTimers->create($data, (int) ($user['id'] ?? 0));
+            $this->logs->log(
+                (int) ($user['id'] ?? 0),
+                'first_timer.created',
+                'first_timer',
+                $data['phone'] !== '' ? $data['phone'] : $data['full_name'],
+                [
+                    'full_name' => $data['full_name'],
+                    'tent_id' => $data['tent_id'],
+                    'status' => $data['status'],
+                ]
+            );
+            $this->notifications->notifyAllUsers(
+                $user,
+                'first_timer.created',
+                'first_timer',
+                'New first-timer added',
+                trim((string) ($data['full_name'] ?? 'A first-timer')) . ' was added to the follow-up list.',
+                '/first-timers',
+                'first_timer',
+                $data['phone'] !== '' ? $data['phone'] : $data['full_name'],
+                [
+                    'full_name' => $data['full_name'],
+                    'tent_id' => $data['tent_id'],
+                ],
+                'first-timer-created:' . md5((string) $data['full_name'] . '|' . (string) $data['phone'] . '|' . (string) $data['first_visit_date'])
+            );
             $_SESSION['flash_success'] = 'First-timer record created.';
         } catch (Throwable $exception) {
             $_SESSION['flash_error'] = 'Unable to create first-timer record right now.';
@@ -119,6 +151,50 @@ final class FirstTimerController
 
         try {
             $this->firstTimers->update($id, $data);
+            $this->logs->log(
+                (int) ($user['id'] ?? 0),
+                'first_timer.updated',
+                'first_timer',
+                $id,
+                [
+                    'full_name_before' => $existing['full_name'] ?? null,
+                    'full_name_after' => $data['full_name'],
+                    'status_after' => $data['status'],
+                ]
+            );
+            $this->notifications->notifyAllUsers(
+                $user,
+                'first_timer.updated',
+                'first_timer',
+                'First-timer updated',
+                trim((string) ($data['full_name'] ?? 'A first-timer')) . '\'s follow-up record was updated.',
+                '/first-timers/show?id=' . $id,
+                'first_timer',
+                $id,
+                [
+                    'full_name' => $data['full_name'],
+                    'status' => $data['status'],
+                ],
+                'first-timer-updated:' . $id . ':' . date('Y-m-d-H-i-s')
+            );
+            $notesBefore = trim((string) ($existing['followup_notes'] ?? ''));
+            $notesAfter = trim((string) ($data['followup_notes'] ?? ''));
+            if ($notesAfter !== '' && $notesAfter !== $notesBefore) {
+                $this->notifications->notifyAllUsers(
+                    $user,
+                    'first_timer.followup_updated',
+                    'follow_up',
+                    'Follow-up note added',
+                    trim((string) ($data['full_name'] ?? 'A first-timer')) . ' has a new follow-up note.',
+                    '/first-timers/show?id=' . $id,
+                    'first_timer',
+                    $id,
+                    [
+                        'full_name' => $data['full_name'],
+                    ],
+                    'first-timer-note:' . $id . ':' . md5($notesAfter)
+                );
+            }
             $_SESSION['flash_success'] = 'First-timer record updated.';
         } catch (Throwable $exception) {
             $_SESSION['flash_error'] = 'Unable to update first-timer record right now.';
@@ -145,6 +221,31 @@ final class FirstTimerController
 
         try {
             $memberId = $this->firstTimers->convertToMember($id, $this->validatedConversionInput());
+            $this->logs->log(
+                (int) ($user['id'] ?? 0),
+                'first_timer.converted',
+                'first_timer',
+                $id,
+                [
+                    'full_name' => $existing['full_name'] ?? null,
+                    'member_id' => $memberId,
+                ]
+            );
+            $this->notifications->notifyAllUsers(
+                $user,
+                'first_timer.converted',
+                'first_timer',
+                'First-timer converted',
+                trim((string) ($existing['full_name'] ?? 'A first-timer')) . ' was converted into a full member profile.',
+                '/members/show?id=' . $memberId,
+                'member',
+                $memberId,
+                [
+                    'member_id' => $memberId,
+                    'full_name' => $existing['full_name'] ?? null,
+                ],
+                'first-timer-converted:' . $id
+            );
             $_SESSION['flash_success'] = 'First-timer converted into a member profile.';
             Redirect::to('/members/show?id=' . $memberId);
         } catch (Throwable $exception) {
