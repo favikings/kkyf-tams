@@ -148,7 +148,93 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     setupPwaInstallPrompt();
+    setupDashboardAttendanceChart();
 });
+
+function setupDashboardAttendanceChart() {
+    const canvas = document.getElementById('dashboardAttendanceChart');
+    if (!canvas || !window.Chart) {
+        return;
+    }
+
+    let labels = [];
+    let values = [];
+
+    try {
+        labels = JSON.parse(canvas.dataset.labels || '[]');
+        values = JSON.parse(canvas.dataset.values || '[]');
+    } catch (error) {
+        return;
+    }
+
+    const maxValue = Math.max(...values, 1);
+    const baselineValues = values.map(() => Math.ceil(maxValue * 1.15));
+
+    new window.Chart(canvas, {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [
+                {
+                    label: 'Baseline',
+                    data: baselineValues,
+                    backgroundColor: '#dff3e7',
+                    borderRadius: 6,
+                    barPercentage: 0.72,
+                    categoryPercentage: 0.7,
+                    grouped: false,
+                },
+                {
+                    label: 'Attended',
+                    data: values,
+                    backgroundColor: '#27ae60',
+                    borderRadius: 6,
+                    barPercentage: 0.52,
+                    categoryPercentage: 0.7,
+                    grouped: false,
+                },
+            ],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false,
+                },
+                tooltip: {
+                    displayColors: false,
+                    callbacks: {
+                        label: (context) => `${context.dataset.label}: ${context.parsed.y.toLocaleString()}`,
+                    },
+                },
+            },
+            scales: {
+                x: {
+                    stacked: false,
+                    grid: {
+                        display: false,
+                    },
+                    ticks: {
+                        color: '#647067',
+                        font: {
+                            size: 12,
+                            weight: '700',
+                        },
+                    },
+                },
+                y: {
+                    beginAtZero: true,
+                    display: false,
+                    grid: {
+                        display: false,
+                    },
+                    suggestedMax: Math.ceil(maxValue * 1.2),
+                },
+            },
+        },
+    });
+}
 
 function setupPwaInstallPrompt() {
     const banner = document.querySelector('[data-pwa-install-banner]');

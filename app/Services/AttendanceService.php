@@ -66,6 +66,76 @@ final class AttendanceService
     }
 
     /**
+     * @return array<int, array<string, mixed>>
+     */
+    public function sundayTentOverview(): array
+    {
+        $date = $this->currentSunday();
+        $stmt = $this->pdo->prepare(
+            "SELECT t.id,
+                    t.name,
+                    t.color,
+                    t.status,
+                    COUNT(DISTINCT m.id) AS member_count,
+                    COUNT(DISTINCT a.id) AS checked_in_count
+             FROM tents t
+             LEFT JOIN members m
+               ON m.tent_id = t.id
+              AND m.active_status = 'active'
+             LEFT JOIN attendance a
+               ON a.member_id = m.id
+              AND a.attendance_date = ?
+             WHERE t.status = 'active'
+             GROUP BY t.id, t.name, t.color, t.status
+             ORDER BY t.name ASC"
+        );
+        $stmt->execute([$date]);
+
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * @param array<string, mixed> $user
+     * @return array<int, array<string, mixed>>
+     */
+    public function checkedInMembersForSunday(array $user, ?int $tentId = null): array
+    {
+        $date = $this->currentSunday();
+        $params = [$date];
+        $where = ['a.attendance_date = ?'];
+
+        if (($user['role'] ?? null) === 'Tent Admin') {
+            $where[] = 'm.tent_id = ?';
+            $params[] = (int) ($user['tent_id'] ?? 0);
+        } elseif ($tentId !== null && $tentId > 0) {
+            $where[] = 'm.tent_id = ?';
+            $params[] = $tentId;
+        }
+
+        $stmt = $this->pdo->prepare(
+            "SELECT a.id AS attendance_id,
+                    a.attendance_date,
+                    a.created_at,
+                    a.source,
+                    m.id AS member_id,
+                    m.full_name,
+                    m.phone,
+                    m.tent_id,
+                    t.name AS tent_name,
+                    u.full_name AS checked_by_name
+             FROM attendance a
+             JOIN members m ON m.id = a.member_id
+             JOIN tents t ON t.id = m.tent_id
+             JOIN users u ON u.id = a.checked_by
+             WHERE " . implode(' AND ', $where) . "
+             ORDER BY t.name ASC, a.created_at DESC, m.full_name ASC"
+        );
+        $stmt->execute($params);
+
+        return $stmt->fetchAll();
+    }
+
+    /**
      * @param array<string, mixed> $user
      */
     public function checkIn(array $user, int $memberId): void
@@ -148,6 +218,34 @@ final class AttendanceService
             'attendance_date' => $date,
             'total' => (int) $stmt->fetchColumn(),
         ];
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $records
+     * @return array<int, array<string, mixed>>
+     */
+    public function groupCheckedInByTent(array $records): array
+    {
+        $grouped = [];
+
+        foreach ($records as $record) {
+            $tentId = (int) ($record['tent_id'] ?? 0);
+            if ($tentId <= 0) {
+                continue;
+            }
+
+            if (!isset($grouped[$tentId])) {
+                $grouped[$tentId] = [
+                    'tent_id' => $tentId,
+                    'tent_name' => (string) ($record['tent_name'] ?? 'Tent'),
+                    'members' => [],
+                ];
+            }
+
+            $grouped[$tentId]['members'][] = $record;
+        }
+
+        return array_values($grouped);
     }
 
     /**

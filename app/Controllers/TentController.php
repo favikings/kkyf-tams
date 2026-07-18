@@ -34,6 +34,7 @@ final class TentController
             'tents' => $tents,
             'overview' => $this->tents->overview($tents),
             'tentAdmins' => $this->tents->tentAdmins(),
+            'adminsByTent' => $this->tents->adminsGroupedByTent(),
             'error' => $this->consumeFlash('flash_error'),
             'success' => $this->consumeFlash('flash_success'),
         ]);
@@ -178,6 +179,7 @@ final class TentController
             'user' => $user,
             'csrfToken' => Csrf::token(),
             'tent' => $this->tents->findAssignedToUser((int) ($user['id'] ?? 0)),
+            'adminsByTent' => $this->tents->adminsGroupedByTent(),
         ]);
     }
 

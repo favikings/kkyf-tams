@@ -31,17 +31,22 @@ final class AttendanceController
 
         $user = AuthService::user() ?? [];
         $query = trim($_GET['q'] ?? '');
-        $tentId = (int) ($_GET['tent_id'] ?? 0);
+        $isSuperAdmin = ($user['role'] ?? null) === 'Super Admin';
+        $checkedInRecords = $this->attendance->checkedInMembersForSunday($user);
 
         return View::render('attendance/index', [
             'title' => 'Attendance',
             'user' => $user,
             'csrfToken' => Csrf::token(),
-            'members' => $this->attendance->searchableMembers($user, $query, $tentId > 0 ? $tentId : null),
-            'summary' => $this->attendance->sundaySummary($user, $tentId > 0 ? $tentId : null),
-            'tents' => $this->availableTents($user),
+            'members' => $isSuperAdmin ? [] : $this->attendance->searchableMembers($user, $query),
+            'summary' => $this->attendance->sundaySummary($user),
+            'tentOverview' => $isSuperAdmin ? $this->attendance->sundayTentOverview() : [],
+            'checkedInRecords' => $checkedInRecords,
+            'checkedInByTent' => $this->attendance->groupCheckedInByTent($checkedInRecords),
+            'assignedTent' => ($user['role'] ?? null) === 'Tent Admin'
+                ? $this->tents->find((int) ($user['tent_id'] ?? 0))
+                : null,
             'query' => $query,
-            'selectedTentId' => $tentId,
             'error' => $this->consumeFlash('flash_error'),
             'success' => $this->consumeFlash('flash_success'),
         ]);

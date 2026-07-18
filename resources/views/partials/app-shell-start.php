@@ -44,24 +44,15 @@ foreach ($navItems as $item) {
 }
 ?>
 <main class="app-shell min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(27,138,75,0.14),transparent_28%),radial-gradient(circle_at_top_right,rgba(213,183,107,0.16),transparent_24%),linear-gradient(180deg,#faf7f1_0%,#f2eee5_100%)]">
-    <button class="fixed left-4 top-4 z-[90] inline-flex items-center gap-2 rounded-full border border-black/10 bg-white/90 px-4 py-3 text-sm font-semibold text-portal-ink shadow-soft backdrop-blur xl:hidden" type="button" data-sidebar-toggle aria-controls="app-sidebar" aria-expanded="false">
-        <i data-lucide="menu"></i>
-        <span>Menu</span>
-    </button>
     <div class="fixed inset-0 z-40 hidden bg-[#102017]/45 backdrop-blur-sm xl:hidden" data-sidebar-close data-portal-backdrop></div>
-    <div class="grid min-h-screen xl:grid-cols-[292px_minmax(0,1fr)]">
-        <aside class="fixed inset-y-0 left-0 z-50 flex w-[292px] -translate-x-full flex-col gap-6 overflow-y-auto border-r border-white/10 bg-[#102017] px-5 py-6 text-white shadow-2xl transition-transform duration-300 xl:sticky xl:top-0 xl:z-auto xl:h-screen xl:translate-x-0" id="app-sidebar" data-portal-sidebar>
+    <div class="min-h-screen">
+        <aside class="fixed inset-y-0 left-0 z-50 flex h-screen w-[292px] -translate-x-full flex-col gap-6 overflow-y-auto border-r border-white/10 bg-[#102017] px-5 py-6 text-white shadow-2xl transition-transform duration-300 xl:translate-x-0" id="app-sidebar" data-portal-sidebar>
             <a class="flex items-center gap-3 text-white no-underline" href="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>/dashboard">
                 <span class="grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 text-lg font-extrabold text-white shadow-soft">K</span>
                 <span class="grid leading-tight">
                     <span class="font-display text-[1.45rem] tracking-[-0.03em]">KKYF Admin</span>
                     <small class="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-white/65">Management Portal</small>
                 </span>
-            </a>
-
-            <a class="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-bold text-portal-ink no-underline shadow-soft" href="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>/members">
-                <i data-lucide="plus"></i>
-                New Member
             </a>
 
             <nav class="grid gap-2" aria-label="Primary navigation" data-sidebar-nav>
@@ -89,17 +80,30 @@ foreach ($navItems as $item) {
             </div>
         </aside>
 
-        <div class="min-w-0 px-4 pb-8 pt-20 xl:px-8 xl:py-8">
-            <nav class="mx-auto grid w-full max-w-[1280px] gap-4 rounded-[30px] border border-white/70 bg-white/82 px-5 py-5 shadow-soft backdrop-blur md:grid-cols-[minmax(0,1fr)_minmax(280px,440px)_auto] md:items-center" aria-label="Page context">
-                <div class="min-w-0">
-                    <strong class="block truncate font-display text-[1.65rem] font-semibold tracking-[-0.035em] text-portal-ink"><?= htmlspecialchars($pageTitle, ENT_QUOTES, 'UTF-8') ?></strong>
+        <div class="min-w-0 px-4 pb-8 pt-4 xl:ml-[292px] xl:px-8 xl:py-8">
+            <nav class="mx-auto grid w-full max-w-[1280px] gap-4 rounded-lg border border-white/70 bg-white/82 px-5 py-5 shadow-soft backdrop-blur xl:grid-cols-[minmax(0,1fr)_minmax(280px,440px)_auto] xl:items-center" aria-label="Page context">
+                <div class="flex items-center justify-between gap-3 xl:hidden">
+                    <button class="inline-flex h-11 items-center gap-2 rounded-lg border border-[#d7dfd6] bg-white px-3 text-sm font-bold text-portal-ink shadow-sm" type="button" data-sidebar-toggle aria-controls="app-sidebar" aria-expanded="false">
+                        <i data-lucide="menu"></i>
+                        <span>Menu</span>
+                    </button>
+                    <div class="flex items-center justify-end gap-3">
+                        <button class="inline-grid h-11 w-11 place-items-center rounded-full border border-[#d7dfd6] bg-[#f7f3ea] text-portal-ink transition hover:bg-white" type="button" aria-label="Notifications"><i data-lucide="bell"></i></button>
+                        <button class="inline-grid h-11 w-11 place-items-center rounded-full border border-[#d7dfd6] bg-[#f7f3ea] text-portal-ink transition hover:bg-white" type="button" aria-label="Help"><i data-lucide="circle-help"></i></button>
+                        <div class="grid h-11 w-11 place-items-center rounded-full bg-gradient-to-br from-[#102017] to-emerald-800 text-sm font-bold text-white shadow-soft" title="<?= htmlspecialchars($user['full_name'] ?? 'User', ENT_QUOTES, 'UTF-8') ?>">
+                            <?= htmlspecialchars(strtoupper(substr($user['full_name'] ?? 'U', 0, 1)), ENT_QUOTES, 'UTF-8') ?>
+                        </div>
+                    </div>
+                </div>
+                <div class="hidden min-w-0 xl:block">
+                    <strong class="block truncate font-sans text-[1.35rem] font-extrabold text-portal-ink"><?= htmlspecialchars($pageTitle, ENT_QUOTES, 'UTF-8') ?></strong>
                     <span class="text-[0.72rem] font-bold uppercase tracking-[0.22em] text-portal-muted"><?= htmlspecialchars($role, ENT_QUOTES, 'UTF-8') ?> workspace</span>
                 </div>
                 <form class="relative w-full" method="GET" action="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>/members">
                     <i class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-portal-muted" data-lucide="search"></i>
                     <input class="h-12 w-full rounded-full border border-[#d7dfd6] bg-[#fcfbf8] pl-12 pr-4 text-sm text-portal-ink outline-none ring-0 placeholder:text-portal-muted/75 focus:border-emerald-500" type="search" name="q" placeholder="Search members..." aria-label="Search members">
                 </form>
-                <div class="flex items-center justify-end gap-3">
+                <div class="hidden items-center justify-end gap-3 xl:flex">
                     <button class="inline-grid h-11 w-11 place-items-center rounded-full border border-[#d7dfd6] bg-[#f7f3ea] text-portal-ink transition hover:bg-white" type="button" aria-label="Notifications"><i data-lucide="bell"></i></button>
                     <button class="inline-grid h-11 w-11 place-items-center rounded-full border border-[#d7dfd6] bg-[#f7f3ea] text-portal-ink transition hover:bg-white" type="button" aria-label="Help"><i data-lucide="circle-help"></i></button>
                     <div class="grid h-11 w-11 place-items-center rounded-full bg-gradient-to-br from-[#102017] to-emerald-800 text-sm font-bold text-white shadow-soft" title="<?= htmlspecialchars($user['full_name'] ?? 'User', ENT_QUOTES, 'UTF-8') ?>">

@@ -150,9 +150,21 @@ final class TentService
     public function findAssignedToUser(int $userId): ?array
     {
         $stmt = $this->pdo->prepare(
-            "SELECT t.*
+            "SELECT t.*,
+                    admins.admin_count,
+                    admins.admin_names
              FROM users u
              JOIN tents t ON t.id = u.tent_id
+             LEFT JOIN (
+                 SELECT tent_id,
+                        COUNT(*) AS admin_count,
+                        GROUP_CONCAT(full_name ORDER BY full_name ASC SEPARATOR ', ') AS admin_names
+                 FROM users
+                 WHERE role = 'Tent Admin'
+                   AND status = 'active'
+                   AND tent_id IS NOT NULL
+                 GROUP BY tent_id
+             ) admins ON admins.tent_id = t.id
              WHERE u.id = ? AND u.role = 'Tent Admin'
              LIMIT 1"
         );
@@ -246,6 +258,34 @@ final class TentService
         );
 
         return $stmt->fetchAll();
+    }
+
+    /**
+     * @return array<int, array<int, array<string, mixed>>>
+     */
+    public function adminsGroupedByTent(): array
+    {
+        $stmt = $this->pdo->query(
+            "SELECT id, full_name, email, tent_id
+             FROM users
+             WHERE role = 'Tent Admin'
+               AND status = 'active'
+               AND tent_id IS NOT NULL
+             ORDER BY full_name ASC"
+        );
+
+        $grouped = [];
+
+        foreach ($stmt->fetchAll() as $admin) {
+            $tentId = (int) ($admin['tent_id'] ?? 0);
+            if ($tentId <= 0) {
+                continue;
+            }
+
+            $grouped[$tentId][] = $admin;
+        }
+
+        return $grouped;
     }
 
     /**
