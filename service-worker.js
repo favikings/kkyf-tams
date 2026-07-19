@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kkyf-tams-v4';
+const CACHE_NAME = 'kkyf-tams-v5';
 
 const ASSETS_TO_CACHE = [
   './',
@@ -40,6 +40,12 @@ self.addEventListener('activate', (event) => {
 // Fetch Event: Network First, Fallback to Cache, Fallback to Offline Page
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') {
+    return;
+  }
+
+  const requestUrl = new URL(event.request.url);
+  if (requestUrl.pathname.endsWith('/notifications')) {
+    event.respondWith(fetch(event.request));
     return;
   }
 

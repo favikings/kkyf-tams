@@ -4,7 +4,7 @@ let deferredInstallPrompt = null;
 
 window.addEventListener('DOMContentLoaded', () => {
     const basePath = document.body?.dataset.basePath || '';
-    if ('serviceWorker' in navigator && basePath !== '') {
+    if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register(`${basePath}/service-worker.js`).catch(() => {
             // Ignore registration failures in development and unsupported hosts.
         });
@@ -175,6 +175,7 @@ function setupNotifications(basePath) {
     let isOpen = false;
     let hasLoaded = false;
     let pollTimer = null;
+    let requestInFlight = false;
 
     const closePanel = () => {
         isOpen = false;
@@ -223,12 +224,30 @@ function setupNotifications(basePath) {
             return;
         }
 
+        if (!window.isSecureContext) {
+            enableBrowserButton.textContent = 'Alerts require HTTPS';
+            enableBrowserButton.setAttribute('disabled', 'disabled');
+            enableBrowserButton.classList.add('opacity-50');
+            return;
+        }
+
+        if (Notification.permission === 'denied') {
+            enableBrowserButton.textContent = 'Alerts blocked in browser';
+            enableBrowserButton.setAttribute('disabled', 'disabled');
+            enableBrowserButton.classList.add('opacity-50');
+            return;
+        }
+
         if (Notification.permission === 'granted' && browserEnabled()) {
             enableBrowserButton.textContent = 'Browser alerts enabled';
+            enableBrowserButton.removeAttribute('disabled');
+            enableBrowserButton.classList.remove('opacity-50');
             return;
         }
 
         enableBrowserButton.textContent = 'Enable browser alerts';
+        enableBrowserButton.removeAttribute('disabled');
+        enableBrowserButton.classList.remove('opacity-50');
     };
 
     const showBrowserNotifications = async (items) => {
@@ -316,12 +335,19 @@ function setupNotifications(basePath) {
     };
 
     const fetchFeed = async (interactive = false) => {
+        if (requestInFlight) {
+            return;
+        }
+
+        requestInFlight = true;
         try {
-            const response = await fetch(feedUrl, {
+            const separator = feedUrl.includes('?') ? '&' : '?';
+            const response = await fetch(`${feedUrl}${separator}_=${Date.now()}`, {
                 headers: {
                     'Accept': 'application/json',
                 },
                 credentials: 'same-origin',
+                cache: 'no-store',
             });
 
             if (!response.ok) {
@@ -349,6 +375,8 @@ function setupNotifications(basePath) {
             if (interactive && empty) {
                 empty.textContent = 'Unable to load notifications right now.';
             }
+        } finally {
+            requestInFlight = false;
         }
     };
 
@@ -433,6 +461,17 @@ function setupNotifications(basePath) {
             const permission = await Notification.requestPermission();
             if (permission === 'granted') {
                 window.localStorage.setItem(browserPrefKey, 'yes');
+                const registration = await navigator.serviceWorker?.ready;
+                const options = {
+                    body: 'You will now receive new KKYF activity alerts.',
+                    tag: 'kkyf-browser-alerts-enabled',
+                };
+
+                if (registration) {
+                    await registration.showNotification('Browser alerts enabled', options);
+                } else {
+                    new Notification('Browser alerts enabled', options);
+                }
             }
             updateBrowserButton();
         });
@@ -442,7 +481,14 @@ function setupNotifications(basePath) {
     fetchFeed(false);
     pollTimer = window.setInterval(() => {
         fetchFeed(false);
-    }, 60000);
+    }, 5000);
+
+    window.addEventListener('focus', () => fetchFeed(false));
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+            fetchFeed(false);
+        }
+    });
 
     window.addEventListener('beforeunload', () => {
         if (pollTimer) {

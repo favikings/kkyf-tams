@@ -52,6 +52,7 @@ final class NotificationService
             "SELECT n.*
              FROM notifications n
              WHERE n.user_id = ?
+               AND n.read_at IS NULL
              ORDER BY n.created_at DESC, n.id DESC
              LIMIT " . max(1, min($limit, 50))
         );
