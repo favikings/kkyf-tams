@@ -1,7 +1,8 @@
 {
   "name": "KKYF Fellowship",
   "short_name": "KKYF TAMS",
-  "start_url": "./index.php",
+  "id": "./",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "background_color": "#F8FAFC",

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kkyf-tams-v5';
+const CACHE_NAME = 'kkyf-tams-v6';
 
 const ASSETS_TO_CACHE = [
   './',
