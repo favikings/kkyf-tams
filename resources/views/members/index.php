@@ -30,6 +30,14 @@ $inactiveCount = max(0, count($members) - $activeCount);
             <p class="mt-1 text-sm text-slate-500">Manage active constituents, track attendance, and oversee tent assignments.</p>
         </div>
         <div class="flex flex-wrap items-center gap-3">
+            <a class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700" href="members/export?format=csv">
+                <i data-lucide="file-down"></i>
+                Export CSV
+            </a>
+            <a class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700" href="members/export?format=excel">
+                <i data-lucide="sheet"></i>
+                Export Excel
+            </a>
             <button type="button" class="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#013f26] px-4 py-2 text-sm font-bold text-white shadow-soft transition hover:bg-[#035733]" data-modal-open="add-member-modal">
                 <i data-lucide="user-plus"></i>
                 Add Member

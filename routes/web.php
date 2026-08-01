@@ -27,6 +27,7 @@ $router->get('/unauthorized', [DashboardController::class, 'unauthorized']);
 $router->get('/tents', [TentController::class, 'index']);
 $router->get('/my-tent', [TentController::class, 'mine']);
 $router->get('/members', [MemberController::class, 'index']);
+$router->get('/members/export', [MemberController::class, 'export']);
 $router->get('/members/show', [MemberController::class, 'show']);
 $router->get('/members/photo', [MemberController::class, 'photo']);
 $router->get('/first-timers', [FirstTimerController::class, 'index']);

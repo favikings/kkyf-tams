@@ -109,6 +109,81 @@ final class MemberController
         return '';
     }
 
+    public function export(): string
+    {
+        AuthMiddleware::requireAuth();
+
+        $user = AuthService::user() ?? [];
+        $format = trim((string) ($_GET['format'] ?? 'csv'));
+        $rows = $this->members->all($user);
+
+        if ($format === 'excel') {
+            $this->sendExcel($rows);
+
+            return '';
+        }
+
+        $this->sendCsv($rows);
+
+        return '';
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $rows
+     */
+    private function sendCsv(array $rows): void
+    {
+        $filename = 'members-' . date('Ymd-His') . '.csv';
+        header('Content-Type: text/csv; charset=UTF-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+
+        $output = fopen('php://output', 'w');
+        fwrite($output, "\xEF\xBB\xBF");
+
+        fputcsv($output, ['Full Name', 'Phone', 'Tent', 'Occupation', 'Status', 'Birthday', 'Join Date']);
+        foreach ($rows as $row) {
+            fputcsv($output, $this->exportRow($row));
+        }
+
+        fclose($output);
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $rows
+     */
+    private function sendExcel(array $rows): void
+    {
+        $filename = 'members-' . date('Ymd-His') . '.xls';
+        header('Content-Type: application/vnd.ms-excel; charset=UTF-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+
+        $lines = [];
+        $lines[] = implode("\t", ['Full Name', 'Phone', 'Tent', 'Occupation', 'Status', 'Birthday', 'Join Date']);
+
+        foreach ($rows as $row) {
+            $lines[] = implode("\t", $this->exportRow($row));
+        }
+
+        echo implode("\r\n", $lines);
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     * @return array<int, string>
+     */
+    private function exportRow(array $row): array
+    {
+        return [
+            trim((string) ($row['full_name'] ?? '')),
+            trim((string) ($row['phone'] ?? '')),
+            trim((string) ($row['tent_name'] ?? '')),
+            trim((string) ($row['occupation'] ?? '')),
+            ucfirst(trim((string) ($row['active_status'] ?? ''))),
+            trim((string) ($row['date_of_birth'] ?? '')),
+            trim((string) ($row['join_date'] ?? '')),
+        ];
+    }
+
     public function create(): string
     {
         AuthMiddleware::requireAuth();

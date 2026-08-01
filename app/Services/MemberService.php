@@ -74,6 +74,37 @@ final class MemberService
 
     /**
      * @param array<string, mixed> $user
+     * @return array<int, array<string, mixed>>
+     */
+    public function all(array $user): array
+    {
+        $params = [];
+        $where = [];
+
+        if (($user['role'] ?? null) === 'Tent Admin') {
+            $where[] = 'm.tent_id = ?';
+            $params[] = (int) ($user['tent_id'] ?? 0);
+        }
+
+        $sql = "SELECT m.id, m.full_name, m.phone, t.name AS tent_name,
+                       m.occupation, m.active_status, m.date_of_birth, m.join_date
+                FROM members m
+                JOIN tents t ON t.id = m.tent_id";
+
+        if ($where !== []) {
+            $sql .= ' WHERE ' . implode(' AND ', $where);
+        }
+
+        $sql .= ' ORDER BY m.full_name ASC';
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * @param array<string, mixed> $user
      * @return array<string, mixed>|null
      */
     public function findScoped(array $user, int $id): ?array
