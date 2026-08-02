@@ -1,7 +1,7 @@
 {
   "name": "KKYF TAMS",
   "short_name": "KKYTAMS",
-  "start_url": "/dashboard.php",
+  "start_url": "dashboard.php",
   "display": "standalone",
   "background_color": "#f8f9fa",
   "theme_color": "#006e2c",
