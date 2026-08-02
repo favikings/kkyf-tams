@@ -53,6 +53,46 @@ final class ReportService
     }
 
     /**
+     * All attendance records for every tent, from the earliest recorded
+     * attendance date to today. Scoped by role: Tent Admins see only their
+     * assigned tent, Super Admins see every tent.
+     *
+     * @param array<string, mixed> $user
+     * @return array<int, array<string, mixed>>
+     */
+    public function allAttendanceRows(array $user): array
+    {
+        $params = [];
+        $where = ['a.attendance_date <= CURRENT_DATE'];
+
+        if (($user['role'] ?? null) === 'Tent Admin') {
+            $where[] = 'm.tent_id = ?';
+            $params[] = (int) ($user['tent_id'] ?? 0);
+        }
+
+        $sql = "SELECT a.id,
+                       a.attendance_date,
+                       a.service_type,
+                       a.created_at,
+                       a.source,
+                       m.full_name,
+                       m.phone,
+                       t.name AS tent_name,
+                       u.full_name AS checked_by_name
+                FROM attendance a
+                JOIN members m ON m.id = a.member_id
+                JOIN tents t ON t.id = m.tent_id
+                LEFT JOIN users u ON u.id = a.checked_by
+                WHERE " . implode(' AND ', $where) . "
+                ORDER BY a.attendance_date ASC, t.name ASC, m.full_name ASC";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+
+        return $stmt->fetchAll();
+    }
+
+    /**
      * @return array{0:string,1:string}
      */
     private function resolveDateWindow(string $type, ?string $dateFrom, ?string $dateTo): array

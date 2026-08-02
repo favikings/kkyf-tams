@@ -79,6 +79,82 @@ final class ReportController
         return '';
     }
 
+    public function exportAll(): string
+    {
+        AuthMiddleware::requireAuth();
+
+        $user = AuthService::user() ?? [];
+        $format = trim((string) ($_GET['format'] ?? 'excel'));
+        $rows = $this->reports->allAttendanceRows($user);
+
+        if ($format === 'csv') {
+            $this->sendAllCsv($rows);
+
+            return '';
+        }
+
+        $this->sendAllExcel($rows);
+
+        return '';
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $rows
+     */
+    private function sendAllCsv(array $rows): void
+    {
+        $filename = 'all-attendance-' . date('Ymd-His') . '.csv';
+        header('Content-Type: text/csv; charset=UTF-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+
+        $output = fopen('php://output', 'w');
+        fwrite($output, "\xEF\xBB\xBF");
+
+        fputcsv($output, ['Date', 'Tent', 'Member', 'Phone', 'Service', 'Checked By', 'Source', 'Recorded At']);
+        foreach ($rows as $row) {
+            fputcsv($output, $this->exportAllRow($row));
+        }
+
+        fclose($output);
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $rows
+     */
+    private function sendAllExcel(array $rows): void
+    {
+        $filename = 'all-attendance-' . date('Ymd-His') . '.xls';
+        header('Content-Type: application/vnd.ms-excel; charset=UTF-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+
+        $lines = [];
+        $lines[] = implode("\t", ['Date', 'Tent', 'Member', 'Phone', 'Service', 'Checked By', 'Source', 'Recorded At']);
+
+        foreach ($rows as $row) {
+            $lines[] = implode("\t", $this->exportAllRow($row));
+        }
+
+        echo implode("\r\n", $lines);
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     * @return array<int, string>
+     */
+    private function exportAllRow(array $row): array
+    {
+        return [
+            trim((string) ($row['attendance_date'] ?? '')),
+            trim((string) ($row['tent_name'] ?? '')),
+            trim((string) ($row['full_name'] ?? '')),
+            trim((string) ($row['phone'] ?? '')),
+            trim((string) ($row['service_type'] ?? '')),
+            trim((string) ($row['checked_by_name'] ?? '')),
+            ucfirst(trim((string) ($row['source'] ?? 'web'))),
+            trim((string) ($row['created_at'] ?? '')),
+        ];
+    }
+
     /**
      * @param array<string, mixed> $report
      */

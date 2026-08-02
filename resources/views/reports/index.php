@@ -31,6 +31,25 @@ $serviceDays = (int) ($summary['service_days'] ?? 0);
         </div>
     </div>
 
+    <section class="mt-5 flex flex-col gap-4 rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm lg:flex-row lg:items-center lg:justify-between">
+        <div class="min-w-0">
+            <h2 class="text-lg font-extrabold text-slate-900">Export All Attendance</h2>
+            <p class="mt-1 max-w-2xl text-sm leading-6 text-slate-500">
+                Download every attendance record for all tents, from the first date attendance was taken to today. Includes member, tent, and check-in details.
+            </p>
+        </div>
+        <div class="flex flex-wrap items-center gap-3">
+            <a class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700" href="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>/reports/export-all?format=csv">
+                <i data-lucide="file-down"></i>
+                Export CSV
+            </a>
+            <a class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#013f26] px-4 py-2 text-sm font-bold text-white shadow-soft transition hover:bg-[#035733]" href="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>/reports/export-all?format=excel">
+                <i data-lucide="sheet"></i>
+                Export Excel
+            </a>
+        </div>
+    </section>
+
     <div class="rounded-[24px] border border-emerald-100 bg-emerald-50 px-5 py-4">
         <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
             <strong class="text-sm font-extrabold text-emerald-800">Branded PDF path enabled</strong>

@@ -39,6 +39,7 @@ $router->get('/activity-logs', [ActivityLogController::class, 'index']);
 $router->get('/reports', [ReportController::class, 'index']);
 $router->get('/reports/print', [ReportController::class, 'print']);
 $router->get('/reports/export', [ReportController::class, 'export']);
+$router->get('/reports/export-all', [ReportController::class, 'exportAll']);
 $router->get('/anniversaries', [AnniversaryController::class, 'index']);
 $router->get('/birthdays', [BirthdayController::class, 'index']);
 $router->get('/sms', [SmsController::class, 'index']);
