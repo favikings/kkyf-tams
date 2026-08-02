@@ -208,9 +208,7 @@ if ($user !== null) {
 <?php if ($loggedIn): ?>
   <aside class="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col bg-primary text-on-primary md:flex">
     <a href="dashboard.php" class="flex min-h-[64px] shrink-0 items-center gap-2.5 px-5">
-      <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-on-primary/15">
-        <i data-lucide="tent-tree" class="h-5 w-5 text-on-primary"></i>
-      </span>
+      <img src="assets/icons/icon-192.png" alt="KKYF" class="w-9 h-9 rounded-lg">
       <span class="font-display text-[16px] leading-6 font-semibold tracking-[-0.01em] text-on-primary"><?= e(APP_NAME) ?></span>
     </a>
 
@@ -269,5 +267,17 @@ if ($user !== null) {
   </nav>
 <?php endif; ?>
 
-  <div class="<?= $loggedIn ? 'md:pl-64' : '' ?>">
-    <main class="<?= $loggedIn ? 'min-h-screen px-5 pb-24 pt-6 md:px-10 md:pb-10 md:pt-10' : 'min-h-screen px-5 py-6 md:px-10 md:py-10' ?>">
+  <div class="<?= $loggedIn ? 'md:pl-64' : '' ?>" <?= $loggedIn ? 'x-data="{ drawerOpen: false }"' : '' ?>>
+    <?php if ($loggedIn): ?>
+    <div class="fixed inset-x-0 top-0 z-30 flex h-14 items-center justify-between bg-primary px-4 text-on-primary md:hidden">
+      <a href="dashboard.php" class="flex min-h-[44px] items-center gap-2">
+        <img src="assets/icons/icon-192.png" alt="KKYF" class="w-8 h-8 rounded-lg">
+        <span class="font-display text-[20px] leading-7 font-semibold">KKYF</span>
+      </a>
+      <button type="button" @click="drawerOpen = true" aria-label="Open navigation menu"
+              class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-on-secondary/10">
+        <i data-lucide="menu" class="w-5 h-5"></i>
+      </button>
+    </div>
+    <?php endif; ?>
+    <main class="<?= $loggedIn ? 'min-h-screen px-5 pb-24 pt-20 md:px-10 md:pb-10 md:pt-10' : 'min-h-screen px-5 py-6 md:px-10 md:py-10' ?>">
