@@ -25,18 +25,19 @@ kkyf-tams-v3/
 
 **B. Subfolder of an existing domain, no separate docroot available (the live setup):**
 
-Apache resolves `kkyfglobal.org/kkyftams/...` straight off `kkyfglobal.org`'s own document root + that literal path — no subdomain's docroot setting changes that. So `public/`'s contents are synced to the `kkyftams/` folder root instead, with `app/`, `migrations/`, `scripts/` landing as sibling folders that are locked down with a checked-in `Require all denied` `.htaccess` each (they can't be moved outside the web root, since there's no "outside" reachable within the FTP account's chroot):
+Apache resolves `kkyfglobal.org/kkyftams/...` straight off `kkyfglobal.org`'s own document root + that literal path — no subdomain's docroot setting changes that. The repo is synced **as-is** (`app/`, `public/`, `migrations/`, `scripts/` stay siblings, exactly matching the repo — every `require __DIR__ . '/../app/...'` and relative `fetch()` call in the codebase assumes this layout, so changing it breaks paths):
 
 ```
 kkyftams/            <- FTP account's home dir; also the app's public URL path
-  .env               <- uploaded manually (gitignored); blocked by public/.htaccess's rule, now at kkyftams/.htaccess
-  app/                <- blocked by app/.htaccess (Require all denied)
-  migrations/         <- blocked by migrations/.htaccess (Require all denied)
-  scripts/            <- blocked by scripts/.htaccess (Require all denied)
-  (public/'s contents, e.g. index.php, login.php, assets/, api/, .htaccess)
+  .htaccess           <- routes requests into public/, denies app/, migrations/, scripts/, .env
+  .env                <- uploaded manually (gitignored); blocked by the rule above
+  app/                <- blocked by app/.htaccess (belt-and-suspenders, Require all denied)
+  migrations/         <- blocked by migrations/.htaccess (same)
+  scripts/            <- blocked by scripts/.htaccess (same)
+  public/             <- served transparently at kkyfglobal.org/kkyftams/ via the root .htaccess rewrite
 ```
 
-`.github/workflows/deploy.yml` handles this automatically — it runs one `FTP-Deploy-Action` step per folder with the right `server-dir` for each. Layout A only applies if you repoint the workflow back to a single `server-dir: /` sync of the whole repo.
+The root `.htaccess` (repo root, deployed to `kkyftams/.htaccess`) is what makes this work — it rewrites any request that isn't already under `public/` into `public/`, without changing the browser's URL, and denies `app/`, `migrations/`, `scripts/`, `.env` outright. `.github/workflows/deploy.yml` just does a single `server-dir: /` sync of the whole repo — no special per-folder handling needed. Layout A is what you'd get by additionally repointing a domain's document root at `public/`, which isn't possible for a plain subfolder of an existing domain.
 
 ## 3. Set .env on the server
 
@@ -66,7 +67,7 @@ In cPanel → **Domains** (or "Manage Domains"), set the domain's **Document Roo
 
 This keeps `app/`, `migrations/`, `.env`, and `scripts/` off the web. Visit the domain — you should be redirected to `login.php`.
 
-**Layout B (subfolder deploy) has no document-root step** — there's nothing to repoint, since the folder is reached via the parent domain's own docroot + path. Security instead comes from the per-folder `.htaccess` files described above. Just visit `kkyfglobal.org/kkyftams/` directly — you should be redirected to `login.php`.
+**Layout B (subfolder deploy) has no document-root step** — there's nothing to repoint, since the folder is reached via the parent domain's own docroot + path. The root `.htaccess`'s rewrite rule does the equivalent job instead. Just visit `kkyfglobal.org/kkyftams/` directly — you should be redirected to `login.php`.
 
 ## 5. Create the first Super Admin
 

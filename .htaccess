@@ -1,0 +1,17 @@
+# This app's real document root is public/, but on this deploy target
+# (kkyfglobal.org/kkyftams) there's no way to point a document root at a
+# nested folder — Apache resolves the URL straight off the parent domain's
+# own docroot + this literal path. So app/, migrations/, scripts/, and .env
+# all end up physically alongside public/ instead of genuinely outside the
+# web root. Block them here, and transparently route everything else into
+# public/ so every existing relative require()/fetch() path in the app
+# (which assumes app/ and public/ are siblings, per the actual repo layout)
+# keeps working unchanged.
+
+RewriteEngine On
+
+RewriteRule ^(app|migrations|scripts)/ - [F,L]
+RewriteRule ^\.env$ - [F,L]
+
+RewriteCond %{REQUEST_URI} !/public/
+RewriteRule ^(.*)$ public/$1 [L]
