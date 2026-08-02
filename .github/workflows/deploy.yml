@@ -12,25 +12,56 @@ jobs:
     steps:
       - name: Get latest code
         uses: actions/checkout@v4
-      
-      - name: Sync files
+
+      # kkyftams@kkyfglobal.org is chrooted to the kkyftams/ folder, which is
+      # reached via kkyfglobal.org/kkyftams (a path under the parent domain's
+      # own document root, not a docroot we can point at public/ ourselves).
+      # So public/'s contents are synced to the folder root, and app/,
+      # migrations/, scripts/ go into locked-down sibling folders (see their
+      # .htaccess files) instead of living outside the web root.
+
+      - name: Deploy public/ as the web root
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          server-dir: / # Changed to root because your FTP user is likely already inside the target folder
+          local-dir: ./public/
+          server-dir: /
           exclude: |
             **/.git*
             **/.git*/**
-            **/.github*/**
-            README.md
-            deployment_guide.md
-            *.sql
-            task.md
-            prd.md
-            tech_specs.md
-            logic_mapper.md
-            implementation_plan.md
-            design_system.md
-            briefs/**
+            **/.DS_Store
+
+      - name: Deploy app/ (access blocked by app/.htaccess)
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./app/
+          server-dir: /app/
+          exclude: |
+            **/.DS_Store
+
+      - name: Deploy migrations/ (access blocked by migrations/.htaccess)
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./migrations/
+          server-dir: /migrations/
+          exclude: |
+            **/.DS_Store
+
+      - name: Deploy scripts/ (access blocked by scripts/.htaccess)
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./scripts/
+          server-dir: /scripts/
+          exclude: |
+            **/.DS_Store
