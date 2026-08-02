@@ -1,0 +1,121 @@
+:root {
+  /* surfaces */
+  --color-background: 248 249 250;
+  --color-on-background: 25 28 29;
+  --color-surface: 248 249 250;
+  --color-surface-dim: 217 218 219;
+  --color-surface-bright: 248 249 250;
+  --color-surface-container-lowest: 255 255 255;
+  --color-surface-container-low: 243 244 245;
+  --color-surface-container: 237 238 239;
+  --color-surface-container-high: 231 232 233;
+  --color-surface-container-highest: 225 227 228;
+  --color-surface-variant: 225 227 228;
+  --color-on-surface: 25 28 29;
+  --color-on-surface-variant: 62 74 62;
+  --color-inverse-surface: 46 49 50;
+  --color-inverse-on-surface: 240 241 242;
+  --color-outline: 110 122 109;
+  --color-outline-variant: 189 202 186;
+
+  /* primary (green — action / check-in / success) */
+  --color-primary: 0 110 44;
+  --color-on-primary: 255 255 255;
+  --color-primary-container: 52 168 83;
+  --color-on-primary-container: 0 53 17;
+  --color-inverse-primary: 109 221 129;
+  --color-surface-tint: 0 110 44;
+
+  /* secondary (indigo — branding / nav / headers) */
+  --color-secondary: 83 67 214;
+  --color-on-secondary: 255 255 255;
+  --color-secondary-container: 108 95 240;
+  --color-on-secondary-container: 255 251 255;
+
+  /* tertiary (neutral gray — supporting UI) */
+  --color-tertiary: 93 94 97;
+  --color-on-tertiary: 255 255 255;
+  --color-tertiary-container: 146 147 149;
+  --color-on-tertiary-container: 42 44 46;
+
+  /* error */
+  --color-error: 186 26 26;
+  --color-on-error: 255 255 255;
+  --color-error-container: 255 218 214;
+  --color-on-error-container: 147 0 10;
+
+  /* fixed tokens — identical in light & dark, for elements that must not flip */
+  --color-primary-fixed: 137 250 155;
+  --color-primary-fixed-dim: 109 221 129;
+  --color-on-primary-fixed: 0 33 8;
+  --color-on-primary-fixed-variant: 0 83 32;
+  --color-secondary-fixed: 228 223 255;
+  --color-secondary-fixed-dim: 197 192 255;
+  --color-on-secondary-fixed: 20 0 103;
+  --color-on-secondary-fixed-variant: 60 39 192;
+  --color-tertiary-fixed: 226 226 229;
+  --color-tertiary-fixed-dim: 198 198 201;
+  --color-on-tertiary-fixed: 26 28 30;
+  --color-on-tertiary-fixed-variant: 69 71 73;
+}
+
+.dark {
+  /* surfaces — derived per M3 dark-scheme mapping */
+  --color-background: 16 20 19;
+  --color-on-background: 225 227 224;
+  --color-surface: 16 20 19;
+  --color-surface-dim: 16 20 19;
+  --color-surface-bright: 55 59 57;
+  --color-surface-container-lowest: 11 15 14;
+  --color-surface-container-low: 25 28 27;
+  --color-surface-container: 29 32 31;
+  --color-surface-container-high: 40 43 41;
+  --color-surface-container-highest: 51 54 52;
+  --color-surface-variant: 65 74 65;
+  --color-on-surface: 225 227 224;
+  --color-on-surface-variant: 192 204 190;
+  --color-inverse-surface: 225 227 224;
+  --color-inverse-on-surface: 25 28 29;
+  --color-outline: 136 147 136;
+  --color-outline-variant: 62 74 62;
+
+  /* primary — dark scheme uses the "fixed-dim" tone as the active primary */
+  --color-primary: 109 221 129;
+  --color-on-primary: 0 33 8;
+  --color-primary-container: 0 83 32;
+  --color-on-primary-container: 137 250 155;
+  --color-inverse-primary: 0 110 44;
+  --color-surface-tint: 109 221 129;
+
+  /* secondary */
+  --color-secondary: 197 192 255;
+  --color-on-secondary: 20 0 103;
+  --color-secondary-container: 60 39 192;
+  --color-on-secondary-container: 228 223 255;
+
+  /* tertiary */
+  --color-tertiary: 198 198 201;
+  --color-on-tertiary: 26 28 30;
+  --color-tertiary-container: 69 71 73;
+  --color-on-tertiary-container: 226 226 229;
+
+  /* error — standard M3 baseline dark-error tones */
+  --color-error: 255 180 171;
+  --color-on-error: 105 0 5;
+  --color-error-container: 147 0 10;
+  --color-on-error-container: 255 218 214;
+
+  /* fixed tokens — unchanged from :root, repeated here for clarity */
+  --color-primary-fixed: 137 250 155;
+  --color-primary-fixed-dim: 109 221 129;
+  --color-on-primary-fixed: 0 33 8;
+  --color-on-primary-fixed-variant: 0 83 32;
+  --color-secondary-fixed: 228 223 255;
+  --color-secondary-fixed-dim: 197 192 255;
+  --color-on-secondary-fixed: 20 0 103;
+  --color-on-secondary-fixed-variant: 60 39 192;
+  --color-tertiary-fixed: 226 226 229;
+  --color-tertiary-fixed-dim: 198 198 201;
+  --color-on-tertiary-fixed: 26 28 30;
+  --color-on-tertiary-fixed-variant: 69 71 73;
+}

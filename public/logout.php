@@ -4,4 +4,6 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../app/includes/auth.php';
 
-redirect(isLoggedIn() ? 'dashboard.php' : 'login.php');
+logout();
+
+redirect('login.php');
