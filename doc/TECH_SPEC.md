@@ -116,7 +116,7 @@ try {
     throw $e;
 }
 ```
-- Soft-delete only. Nothing is ever `DELETE`d — tents and members use `is_active` / `status = 'inactive'`.
+- Soft-delete only, with two narrow, explicitly documented exceptions (`doc/DECISIONS.md` R-37): a member with zero attendance rows may be hard-`DELETE`d from `member-view.php`, and a Super Admin may hard-`DELETE` every member in one tent from `tents.php`'s Danger Zone (both require the confirmation flow specced in R-37 — never add a hard delete elsewhere without recording it there first). Every other delete uses `is_active` / `status = 'inactive'`.
 
 ---
 

@@ -38,6 +38,30 @@ if (!$isSuper && (int) $member['tent_id'] !== $scopeTentId) {
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
     verifyCsrf();
 
+    $action = (string) ($_POST['action'] ?? 'add_note');
+
+    if ($action === 'delete_member') {
+        // Re-check server-side — never trust the button variant the client rendered.
+        $countStmt = db()->prepare('SELECT COUNT(*) FROM attendance WHERE member_id = ?');
+        $countStmt->execute([$member['id']]);
+        if ((int) $countStmt->fetchColumn() > 0) {
+            flash('error', 'This member has attendance history and cannot be deleted. Deactivate instead.');
+            redirect('member-view.php?id=' . $member['id']);
+        }
+
+        $memberName = (string) $member['full_name'];
+        db()->prepare('DELETE FROM members WHERE id = ?')->execute([$member['id']]);
+
+        flash('success', $memberName . ' was deleted.');
+        redirect('members.php');
+    }
+
+    if ($action === 'deactivate_member') {
+        db()->prepare("UPDATE members SET status = 'inactive' WHERE id = ?")->execute([$member['id']]);
+        flash('success', (string) $member['full_name'] . ' was deactivated.');
+        redirect('member-view.php?id=' . $member['id']);
+    }
+
     $note = trim((string) ($_POST['note'] ?? ''));
     if ($note === '') {
         flash('error', 'Note cannot be empty.');
@@ -60,6 +84,7 @@ $attendanceStmt = db()->prepare(
 );
 $attendanceStmt->execute([$member['id'], (int) $member['tent_id']]);
 $attendance = $attendanceStmt->fetchAll();
+$attendanceCount = count($attendance);
 
 $followupStmt = db()->prepare(
     'SELECT * FROM first_timer_followups WHERE member_id = ? AND tent_id = ?'
@@ -95,6 +120,7 @@ $hasPhone = (string) ($member['phone'] ?? '') !== '';
 $buttonBase = 'inline-flex items-center justify-center min-h-[44px] px-5 py-2.5 rounded-md text-[14px] leading-5 font-semibold font-display tracking-[0.02em] active:scale-[0.98] motion-safe:transition-transform';
 $primaryButton = $buttonBase . ' bg-primary text-on-primary shadow-card';
 $secondaryButton = $buttonBase . ' bg-surface-container text-on-surface border border-outline-variant';
+$destructiveButton = $buttonBase . ' bg-error text-on-error';
 $inputClass = 'mt-1 w-full min-h-[44px] rounded-md border border-outline-variant bg-surface-container-low px-3.5 py-2.5 text-[16px] leading-6 text-on-surface focus:border-primary focus:bg-surface-lowest focus:outline-none placeholder:text-on-surface-variant/60';
 
 $pageTitle = 'Member Profile';
@@ -135,6 +161,27 @@ require_once __DIR__ . '/../app/includes/header.php';
         <i data-lucide="pencil" class="h-5 w-5"></i>
         Edit
       </a>
+      <?php if ($attendanceCount === 0): ?>
+        <form method="post" action="member-view.php?id=<?= (int) $member['id'] ?>">
+          <input type="hidden" name="csrf" value="<?= e(csrfToken()) ?>">
+          <input type="hidden" name="action" value="delete_member">
+          <button type="submit" class="<?= $destructiveButton ?>"
+                  onclick="return confirm(<?= e(json_encode('Delete ' . $member['full_name'] . '? This member has no attendance history, so this is permanent and cannot be undone.', JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)) ?>)">
+            <i data-lucide="trash-2" class="h-5 w-5"></i>
+            Delete Member
+          </button>
+        </form>
+      <?php elseif ((string) $member['status'] === 'active'): ?>
+        <form method="post" action="member-view.php?id=<?= (int) $member['id'] ?>">
+          <input type="hidden" name="csrf" value="<?= e(csrfToken()) ?>">
+          <input type="hidden" name="action" value="deactivate_member">
+          <button type="submit" class="<?= $secondaryButton ?>"
+                  onclick="return confirm(<?= e(json_encode('Deactivate ' . $member['full_name'] . '? They\'ll be hidden from active lists but their attendance history is kept.', JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)) ?>)">
+            <i data-lucide="user-x" class="h-5 w-5"></i>
+            Deactivate Member
+          </button>
+        </form>
+      <?php endif; ?>
     </div>
   </header>
 

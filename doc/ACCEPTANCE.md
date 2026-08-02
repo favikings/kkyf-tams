@@ -16,7 +16,7 @@ Every `public/*.php` file that touches member/attendance/follow-up data must pas
 - [ ] **Semantic tokens only** — no raw hex, no default Tailwind palette classes, no inline `<style>`. Light + dark both render correctly.
 - [ ] **Component recipes** — only `COMPONENTS.md` markup; no invented button/input/badge/card variants.
 - [ ] **No hardcoded tents** — tent lists/counts always queried from `tents`.
-- [ ] **Soft delete only** — deactivations set `is_active`/`status`, never `DELETE`.
+- [ ] **Soft delete only, except the two R-37 exceptions** — ordinary deactivations set `is_active`/`status`, never `DELETE`. The only real `DELETE`s in the app are: a zero-attendance member from `member-view.php`, and a Super Admin's tent-scoped "Delete All Members" in `tents.php`'s Danger Zone — both gated exactly as `doc/DECISIONS.md` R-37 specifies (server-side re-validation, typed tent-name match, audit log line for the bulk case). No other page may hard-delete.
 - [ ] **Transactions** — multi-step writes (quick-add, imports) wrapped per `TECH_SPEC.md §4`.
 - [ ] **`php -l` passes** on every touched PHP file.
 - [ ] **Smoke-tested** in both light and dark mode, mobile width (≤375px) and desktop (≥1024px).

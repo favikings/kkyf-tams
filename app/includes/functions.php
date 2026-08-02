@@ -27,6 +27,23 @@ function redirect(string $path): void
 }
 
 /**
+ * PLACEHOLDER audit trail (doc/DECISIONS.md R-37) for the single most
+ * consequential action in the app — a Super Admin bulk-deleting every member
+ * in a tent. Appends one timestamped line to a local log file since no
+ * `activity_logs` table exists yet. Replace with a real table + UI when that
+ * lands; do not build more on top of this file-based approach in the meantime.
+ */
+function logDangerZoneAction(string $line): void
+{
+    $dir = dirname(__DIR__) . '/storage/logs';
+    if (!is_dir($dir)) {
+        mkdir($dir, 0755, true);
+    }
+
+    file_put_contents($dir . '/danger-zone.log', '[' . date('Y-m-d H:i:s') . '] ' . $line . PHP_EOL, FILE_APPEND | LOCK_EX);
+}
+
+/**
  * Returns the current service Sunday as 'Y-m-d': today when today is Sunday,
  * otherwise the most recent past Sunday.
  */
