@@ -276,3 +276,39 @@ All reset mail goes through `sendMail()` in `app/includes/mailer.php`; pages nev
 Required environment keys are `MAIL_TRANSPORT`, `MAIL_FROM_ADDRESS`,
 `MAIL_FROM_NAME`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, and
 `SMTP_ENCRYPTION`. Secrets stay in `.env`; `.env.example` contains placeholders only.
+
+---
+
+## 11. Super Admin Notifications + Web Push
+
+Tent Admin self-registration creates one persistent `notifications` row for
+every approved, active `super_admin`. The user row and notification rows are
+one transaction; Web Push delivery happens only after commit and is
+best-effort, so a third-party push outage never loses or rolls back a
+registration.
+
+- `notifications.php` is Super-Admin-only and is the durable inbox/read-state
+  surface. Every alert links to `tent-admins.php` through a server-validated
+  local action URL.
+- `api/push-subscription.php` is a Super-Admin-only JSON POST endpoint. It
+  verifies CSRF and accepts `subscribe`/`unsubscribe`; endpoints and browser
+  keys are validated, and only an SHA-256 endpoint hash is indexed.
+- A Super Admin may subscribe multiple browsers/devices. An endpoint belongs
+  to one current user; an upsert moves it when the same browser changes account.
+- Notification permission is requested only after the user taps **Enable
+  notifications**. Never prompt automatically on page load.
+- `public/sw.js` handles `push` and `notificationclick`, always displays a
+  user-visible notification, and only navigates to a same-origin URL.
+- Server delivery uses `minishlink/web-push` with stable VAPID keys from
+  `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, and `VAPID_SUBJECT`. The private key
+  never reaches HTML/JavaScript. Expired subscriptions (HTTP 404/410) are
+  deleted; other delivery failures are logged without exposing them publicly.
+- iOS/iPadOS users must install the PWA to the Home Screen, open that installed
+  app, and tap the enable button. HTTPS is mandatory outside localhost.
+
+Registration email uniqueness is defense-in-depth: input is normalized with
+`strtolower(trim(...))`; lookup compares `LOWER(TRIM(email))`; a per-email
+MySQL advisory lock serializes concurrent submits; the insert catches SQLSTATE
+`23000` and renders the normal field error; and `users.email` remains uniquely
+indexed. Migration 004 refuses to normalize/add the index when pre-existing
+normalized duplicates exist—those rows require deliberate operator review.

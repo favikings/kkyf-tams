@@ -81,6 +81,44 @@ CREATE TABLE IF NOT EXISTS password_reset_attempts (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ---------------------------------------------------------------------
+-- notifications — persistent, per-user alerts (initially Super Admin)
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS notifications (
+    id              BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id         INT UNSIGNED NOT NULL,
+    type            VARCHAR(50) NOT NULL,
+    title           VARCHAR(150) NOT NULL,
+    message         VARCHAR(255) NOT NULL,
+    action_url      VARCHAR(255) NULL,
+    related_user_id INT UNSIGNED NULL,
+    read_at         DATETIME NULL,
+    created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_notifications_user_unread (user_id, read_at, created_at),
+    INDEX idx_notifications_related_user (related_user_id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (related_user_id) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ---------------------------------------------------------------------
+-- push_subscriptions — one Super Admin may subscribe multiple devices
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS push_subscriptions (
+    id               BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id          INT UNSIGNED NOT NULL,
+    endpoint_hash    CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    endpoint         TEXT NOT NULL,
+    public_key       VARCHAR(255) NOT NULL,
+    auth_token       VARCHAR(255) NOT NULL,
+    content_encoding VARCHAR(20) NOT NULL DEFAULT 'aes128gcm',
+    user_agent       VARCHAR(255) NULL,
+    created_at       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_push_subscriptions_endpoint_hash (endpoint_hash),
+    INDEX idx_push_subscriptions_user (user_id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ---------------------------------------------------------------------
 -- members
 -- ---------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS members (

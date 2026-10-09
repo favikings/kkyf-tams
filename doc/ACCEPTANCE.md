@@ -135,3 +135,16 @@ Every `public/*.php` file that touches member/attendance/follow-up data must pas
 - [x] Reset and password-changed emails use trusted `APP_URL`; no reset URL is built from the request Host header.
 - [x] Both pages follow the auth-page visual language, semantic tokens, dark mode, and COMPONENTS.md recipes at mobile and desktop widths.
 - [x] Tests cover generic responses, eligibility, both rate limits, expiry, replay, password mismatch/length, session invalidation, mail transport safety, PDO prepared statements, and `php -l` on every touched PHP file.
+
+## STEP 20 — Super Admin Registration Notifications + Duplicate Guard
+
+- [x] Migration 004 is re-runnable, adds `notifications` and `push_subscriptions`, and refuses to silently merge/delete existing normalized-email duplicates.
+- [x] Concurrent/case-variant registration attempts create exactly one user; duplicate-key races render the inline existing-account error rather than a 500.
+- [x] A successful Tent Admin registration creates one persistent alert for every approved active Super Admin in the same transaction.
+- [x] `notifications.php` is Super-Admin-only, shows unread/read alerts, provides mark-all-read, and opens an alert through a validated local URL.
+- [x] Desktop sidebar, mobile drawer, and mobile top bar expose the unread count using semantic tokens.
+- [x] Web Push permission is requested only from an explicit user action; subscribe/unsubscribe API is Super-Admin-only, CSRF-protected, validated, and uses the standard JSON shape.
+- [x] Service worker always displays received push payloads and notification clicks navigate only within the portal origin.
+- [x] VAPID private key remains server-only; expired subscriptions are removed; push failure never rolls back registration.
+- [x] iOS Home-Screen requirement, migration, stable VAPID keys, and production setup are documented.
+- [x] PHP/JavaScript lint, PDO/prepared/role/CSRF audit, concurrent registration test, notification read-state test, and responsive light/dark visual QA pass.

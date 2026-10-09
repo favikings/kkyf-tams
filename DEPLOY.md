@@ -1,6 +1,6 @@
 # KKYF Membership Portal — Deployment (cPanel)
 
-Short runbook for getting the portal live on shared cPanel hosting (PHP 8.2+, MySQL 8). There is no frontend build; the deploy workflow installs the one approved Composer dependency before its upload-and-go FTP sync.
+Short runbook for getting the portal live on shared cPanel hosting (PHP 8.2+, MySQL 8). There is no frontend build; the deploy workflow installs the approved mail/Web-Push Composer dependencies before its upload-and-go FTP sync.
 
 ## 1. Prepare the database
 
@@ -8,6 +8,7 @@ Short runbook for getting the portal live on shared cPanel hosting (PHP 8.2+, My
 2. In **phpMyAdmin**, select the new database and run `migrations/001_schema.sql` (Import → choose file → Go). This creates all tables, **zero seed rows**.
    - Also run `migrations/002_members_phone_nullable.sql` right after (makes `members.phone` optional; the app treats phone as optional).
    - Then run `migrations/003_password_reset.sql` (adds password-reset tokens, request throttling, and session-version invalidation). It is safe to run more than once.
+   - Then run `migrations/004_admin_notifications.sql` (persistent notifications, browser subscriptions, and email-uniqueness repair). It is safe to run more than once. If it reports duplicate normalized emails, run the diagnostic query printed at the top of the migration, deliberately resolve the listed user rows, and rerun it; the migration never guesses which account to delete.
 
 ## 2. Upload the files
 
@@ -19,7 +20,7 @@ There are two possible layouts, depending on whether the app gets its own docume
 kkyf-tams-v3/
   .env               <- copy from .env.example, fill in (never commit the real one)
   app/               <- config + includes (above web root, not publicly served)
-  migrations/        <- 001_schema.sql, 002_members_phone_nullable.sql
+  migrations/        <- 001_schema.sql, then 002, 003, and 004
   public/            <- <-- point the domain's document root here
   scripts/           <- create-super-admin.php
 ```
@@ -57,12 +58,16 @@ APP_DEBUG=false          # true only for local dev; false hides errors in produc
 
 MAIL_TRANSPORT=smtp
 MAIL_FROM_ADDRESS=no-reply@yourdomain.com
-MAIL_FROM_NAME="KKYF Membership Portal"
+MAIL_FROM_NAME=KKYF Membership Portal
 SMTP_HOST=mail.yourdomain.com
 SMTP_PORT=587
 SMTP_USERNAME=no-reply@yourdomain.com
 SMTP_PASSWORD=<smtp_password>
 SMTP_ENCRYPTION=tls      # tls/587 or ssl/465, as supplied by your mail host
+
+VAPID_PUBLIC_KEY=<generated_public_key>
+VAPID_PRIVATE_KEY=<generated_private_key>
+VAPID_SUBJECT=mailto:no-reply@yourdomain.com
 ```
 
 Use a real mailbox or transactional SMTP account whose credentials match the
@@ -74,6 +79,19 @@ The GitHub deploy workflow runs `composer install --no-dev` before FTP sync, so
 `vendor/` and PHPMailer are uploaded automatically even though `vendor/` is
 gitignored. For a manual upload, run the same Composer command locally first and
 upload the generated `vendor/` directory with the application.
+
+Generate the VAPID key pair once after Composer dependencies are present:
+
+```bash
+php scripts/generate-vapid-keys.php
+```
+
+Copy its three output lines into `.env`. Keep the private key secret and do not
+regenerate the pair after devices subscribe—changing it invalidates existing
+subscriptions. On each Super Admin device, sign in, open **Admin →
+Notifications**, then tap **Enable notifications**. On iPhone/iPad, first add
+the portal to the Home Screen and open that installed PWA; browser-tab Safari
+cannot opt in to iOS Web Push.
 
 Keep `.env` out of the web root (it already is — it lives one level above `public/`).
 
@@ -103,6 +121,7 @@ Enter name, email, phone, and an 8+ character password. The script is **re-runna
 
 1. **Log in as Super Admin** → create your **Tents** (`Admin → Tents`). Nothing else works until tents exist.
 2. **Import members** (`Admin → Import`) — pick a tent, upload your CSV/XLSX, map columns, validate, and import. This is how the initial roster gets in.
-3. **Approve Tent Admins as they register** (`Admin → Tent Admins`) — Tent Admins sign up on the public `register.php` page, stay `pending`, and can only log in after you approve them.
+3. **Enable Super Admin alerts** (`Admin → Notifications`) on each phone/browser that should receive registration pushes.
+4. **Approve Tent Admins as they register** (`Admin → Tent Admins`) — Tent Admins sign up on the public `register.php` page, stay `pending`, and can only log in after you approve them.
 
 Then go live: **Check In** (Dashboard → Start Sunday Check-in) on service day, review **Attendance History**, and work through **Follow-Ups** for first-timers.

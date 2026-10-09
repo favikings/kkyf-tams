@@ -26,6 +26,7 @@ Legend: 🟢 all authenticated · 🔒 super_admin only · 📣 public
 | `followups.php` | 🟢 | Super: `?tent_id=` filter. Tent: own tent | `requireLogin();` |
 | `tents.php` | 🔒 | — | `requireSuperAdmin();` |
 | `tent-admins.php` | 🔒 | — | `requireSuperAdmin();` |
+| `notifications.php` | 🔒 | Persistent alerts + per-device Web Push opt-in | `requireSuperAdmin();` |
 | `import.php` | 🔒 | — | `requireSuperAdmin();` |
 | `assets/css/theme.css`, `manifest.json` | 📣 | Static assets — served without guards | — |
 
@@ -36,8 +37,10 @@ Legend: 🟢 all authenticated · 🔒 super_admin only · 📣 public
 | `checkin.php` | 🟢 | tent-scoped | `API_CONTRACT.md §2` |
 | `member-quick-add.php` | 🟢 | tent-scoped | `API_CONTRACT.md §3` |
 | `followup-status.php` | 🟢 | tent-scoped | `API_CONTRACT.md §4` |
+| `push-subscription.php` | 🔒 | current Super Admin only | `API_CONTRACT.md §7` |
 
-All three call `requireLogin();` then `verifyCsrf();` — see `API_CONTRACT.md`.
+Every endpoint calls the documented auth guard and `verifyCsrf()` before a
+state-changing action — see `API_CONTRACT.md`.
 
 ---
 

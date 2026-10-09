@@ -187,3 +187,44 @@ Every member/attendance/follow-up row written must belong to the effective `tent
   `forgot-password.php` and `reset-password.php`; their security contract is
   `TECH_SPEC.md §10`, not a JSON endpoint.
 - Offline sync / service worker endpoints are **Phase 2** — do not build.
+
+`notifications.php` uses normal CSRF-protected POSTs for `mark_all_read` and
+opening/marking one notification. These are not API endpoints.
+
+---
+
+## 7. `POST api/push-subscription.php`
+
+Super Admin only. JSON request; CSRF required.
+
+Subscribe request:
+
+```json
+{
+  "action": "subscribe",
+  "endpoint": "https://push-service.example/subscription/...",
+  "public_key": "browser-p256dh-base64url",
+  "auth_token": "browser-auth-base64url",
+  "content_encoding": "aes128gcm",
+  "csrf": "..."
+}
+```
+
+Unsubscribe request:
+
+```json
+{
+  "action": "unsubscribe",
+  "endpoint": "https://push-service.example/subscription/...",
+  "csrf": "..."
+}
+```
+
+Success response:
+
+```json
+{ "success": true, "data": { "subscribed": true } }
+```
+
+Errors: `403` non-Super-Admin, `422` invalid action/endpoint/keys, `503` VAPID
+not configured. All return the standard `{ "success": false, "error": "…" }`.

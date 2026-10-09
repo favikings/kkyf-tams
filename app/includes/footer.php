@@ -50,7 +50,10 @@ $footerFlashes = getFlashes();
               <a href="<?= e($item['href']) ?>" @click="drawerOpen = false"
                  class="flex min-h-[44px] items-center gap-3 rounded-md px-3 py-2.5 text-[14px] leading-5 <?= $item['active'] ? 'bg-on-primary/15 font-medium text-on-primary' : 'text-on-primary/85 hover:bg-on-primary/10' ?>">
                 <i data-lucide="<?= e($item['icon']) ?>" class="h-5 w-5 shrink-0"></i>
-                <span class="font-display"><?= e($item['label']) ?></span>
+                <span class="min-w-0 flex-1 font-display"><?= e($item['label']) ?></span>
+                <?php if ((int) ($item['badge'] ?? 0) > 0): ?>
+                  <span class="inline-flex min-w-5 items-center justify-center rounded-full bg-error px-1.5 py-0.5 font-display text-[12px] leading-4 font-semibold text-on-error"><?= min((int) $item['badge'], 99) ?></span>
+                <?php endif; ?>
               </a>
             <?php endforeach; ?>
           <?php endif; ?>

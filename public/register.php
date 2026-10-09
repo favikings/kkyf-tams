@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../app/includes/auth.php';
+require_once __DIR__ . '/../app/includes/notifications.php';
 
 if (isLoggedIn()) {
     redirect('dashboard.php');
@@ -25,6 +26,10 @@ $tentStmt = db()->prepare('SELECT id, name FROM tents WHERE is_active = 1 ORDER 
 $tentStmt->execute();
 $tents = $tentStmt->fetchAll();
 $tentIds = array_map('intval', array_column($tents, 'id'));
+$tentNames = [];
+foreach ($tents as $tent) {
+    $tentNames[(int) $tent['id']] = (string) $tent['name'];
+}
 
 $registered = isset($_GET['registered']);
 
@@ -68,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (!isset($errors['email'])) {
-        $exists = db()->prepare('SELECT id FROM users WHERE email = ?');
+        $exists = db()->prepare('SELECT id FROM users WHERE LOWER(TRIM(email)) = ? LIMIT 1');
         $exists->execute([$old['email']]);
         if ($exists->fetch() !== false) {
             $errors['email'] = 'An account with this email already exists.';
@@ -77,14 +82,88 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($errors === []) {
         $hash = password_hash($password, PASSWORD_BCRYPT);
+        if ($hash === false) {
+            throw new RuntimeException('Could not hash the registration password.');
+        }
 
-        $insert = db()->prepare(
-            "INSERT INTO users (name, email, phone, password_hash, role, tent_id, status, is_active)
-             VALUES (?, ?, ?, ?, 'tent_admin', ?, 'pending', 1)"
-        );
-        $insert->execute([$old['name'], $old['email'], $old['phone'], $hash, (int) $old['tent_id']]);
+        $pdo = db();
+        $lockName = 'kkyf-register-' . substr(hash('sha256', $old['email']), 0, 40);
+        $lock = $pdo->prepare('SELECT GET_LOCK(?, 5)');
+        $lock->execute([$lockName]);
+        $lockAcquired = (int) $lock->fetchColumn() === 1;
+        $recipientIds = [];
+        $registrationCreated = false;
 
-        redirect('register.php?registered=1');
+        if (!$lockAcquired) {
+            $errors['email'] = 'Registration is busy for this email. Please try again.';
+        } else {
+            try {
+                $pdo->beginTransaction();
+
+                // Re-check while holding the per-email lock. This closes the
+                // concurrent double-submit window even on a misconfigured live
+                // database that is missing the canonical unique email index.
+                $exists = $pdo->prepare(
+                    'SELECT id FROM users WHERE LOWER(TRIM(email)) = ? LIMIT 1'
+                );
+                $exists->execute([$old['email']]);
+                if ($exists->fetch() !== false) {
+                    $pdo->rollBack();
+                    $errors['email'] = 'An account with this email already exists.';
+                } else {
+                    $insert = $pdo->prepare(
+                        "INSERT INTO users (name, email, phone, password_hash, role, tent_id, status, is_active)
+                         VALUES (?, ?, ?, ?, 'tent_admin', ?, 'pending', 1)"
+                    );
+                    $insert->execute([
+                        $old['name'],
+                        $old['email'],
+                        $old['phone'],
+                        $hash,
+                        (int) $old['tent_id'],
+                    ]);
+
+                    $registeredUserId = (int) $pdo->lastInsertId();
+                    $tentName = $tentNames[(int) $old['tent_id']];
+                    $recipientIds = createSuperAdminRegistrationNotifications(
+                        $pdo,
+                        $registeredUserId,
+                        $old['name'],
+                        $tentName
+                    );
+                    $pdo->commit();
+                    $registrationCreated = true;
+                }
+            } catch (Throwable $exception) {
+                if ($pdo->inTransaction()) {
+                    $pdo->rollBack();
+                }
+
+                if ($exception instanceof PDOException && $exception->getCode() === '23000') {
+                    $errors['email'] = 'An account with this email already exists.';
+                } else {
+                    throw $exception;
+                }
+            } finally {
+                $release = $pdo->prepare('SELECT RELEASE_LOCK(?)');
+                $release->execute([$lockName]);
+            }
+        }
+
+        if ($registrationCreated) {
+            try {
+                sendPushToUsers(
+                    $recipientIds,
+                    'New admin registration',
+                    $old['name'] . ' requested access for ' . $tentName . '.',
+                    'tent-admins.php'
+                );
+            } catch (Throwable $pushException) {
+                error_log('Registration push notification failed: ' . $pushException->getMessage());
+            }
+
+            redirect('register.php?registered=1');
+        }
     }
 }
 ?>
@@ -248,7 +327,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       </h1>
       <p class="mt-2 text-[14px] leading-5 text-on-surface-variant">Register as a Tent Admin to manage your tent.</p>
 
-      <form method="post" action="register.php" class="mt-8 space-y-5">
+      <form method="post" action="register.php" class="mt-8 space-y-5" x-data="{ submitting: false }" @submit="submitting = true">
         <input type="hidden" name="csrf" value="<?= e(csrfToken()) ?>">
 
         <div>
@@ -328,9 +407,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           <?php endif; ?>
         </div>
 
-        <button type="submit"
-          class="w-full min-h-[44px] px-5 py-2.5 rounded-md bg-primary text-on-primary font-display font-semibold text-[14px] leading-5 tracking-[0.02em] shadow-card active:scale-[0.98] motion-safe:transition-transform">
-          Register
+        <button type="submit" :disabled="submitting"
+          class="w-full min-h-[44px] px-5 py-2.5 rounded-md bg-primary text-on-primary font-display font-semibold text-[14px] leading-5 tracking-[0.02em] shadow-card disabled:cursor-wait disabled:opacity-60 active:scale-[0.98] motion-safe:transition-transform">
+          <span x-text="submitting ? 'Submitting…' : 'Register'">Register</span>
         </button>
       </form>
 

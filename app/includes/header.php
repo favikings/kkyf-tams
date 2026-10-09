@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/notifications.php';
 
 $loggedIn = isLoggedIn();
 $user = currentUser();
@@ -11,6 +12,10 @@ $pageTitle = (string) ($pageTitle ?? APP_NAME);
 
 $activePage = basename($_SERVER['PHP_SELF'] ?? '');
 $isMembersActive = in_array($activePage, ['members.php', 'member-view.php', 'member-edit.php'], true);
+$notificationCount = 0;
+if ($user !== null && $user['role'] === 'super_admin') {
+    $notificationCount = notificationUnreadCount((int) $user['id']);
+}
 
 $navItems = [
     ['href' => 'dashboard.php', 'icon' => 'layout-dashboard', 'label' => 'Dashboard', 'active' => $activePage === 'dashboard.php'],
@@ -23,6 +28,7 @@ $navItems = [
 $adminNavItems = [
     ['href' => 'tents.php', 'icon' => 'tent', 'label' => 'Tents', 'active' => $activePage === 'tents.php'],
     ['href' => 'tent-admins.php', 'icon' => 'user-cog', 'label' => 'Tent Admins', 'active' => $activePage === 'tent-admins.php'],
+    ['href' => 'notifications.php', 'icon' => 'bell', 'label' => 'Notifications', 'active' => $activePage === 'notifications.php', 'badge' => $notificationCount],
     ['href' => 'import.php', 'icon' => 'upload', 'label' => 'Import', 'active' => $activePage === 'import.php'],
 ];
 
@@ -227,7 +233,10 @@ if ($user !== null) {
           <a href="<?= e($item['href']) ?>"
              class="flex min-h-[44px] items-center gap-3 rounded-md px-3 py-2.5 text-[14px] leading-5 <?= $item['active'] ? 'bg-on-primary/15 font-medium text-on-primary' : 'text-on-primary/85 hover:bg-on-primary/10' ?>">
             <i data-lucide="<?= e($item['icon']) ?>" class="h-5 w-5 shrink-0"></i>
-            <span class="font-display"><?= e($item['label']) ?></span>
+            <span class="min-w-0 flex-1 font-display"><?= e($item['label']) ?></span>
+            <?php if ((int) ($item['badge'] ?? 0) > 0): ?>
+              <span class="inline-flex min-w-5 items-center justify-center rounded-full bg-error px-1.5 py-0.5 font-display text-[12px] leading-4 font-semibold text-on-error"><?= min((int) $item['badge'], 99) ?></span>
+            <?php endif; ?>
           </a>
         <?php endforeach; ?>
       <?php endif; ?>
@@ -274,10 +283,21 @@ if ($user !== null) {
         <img src="assets/icons/icon-192.png" alt="KKYF" class="w-8 h-8 rounded-lg">
         <span class="font-display text-[20px] leading-7 font-semibold">KKYF</span>
       </a>
-      <button type="button" @click="drawerOpen = true" aria-label="Open navigation menu"
-              class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-on-secondary/10">
-        <i data-lucide="menu" class="w-5 h-5"></i>
-      </button>
+      <div class="flex items-center gap-1">
+        <?php if (isSuperAdmin()): ?>
+          <a href="notifications.php" aria-label="Notifications<?= $notificationCount > 0 ? ' — ' . $notificationCount . ' unread' : '' ?>"
+             class="relative flex h-11 w-11 items-center justify-center rounded-full hover:bg-on-primary/10">
+            <i data-lucide="bell" class="h-5 w-5"></i>
+            <?php if ($notificationCount > 0): ?>
+              <span class="absolute right-1 top-1 inline-flex min-h-4 min-w-4 items-center justify-center rounded-full bg-error px-1 font-display text-[10px] leading-4 font-semibold text-on-error"><?= min($notificationCount, 99) ?></span>
+            <?php endif; ?>
+          </a>
+        <?php endif; ?>
+        <button type="button" @click="drawerOpen = true" aria-label="Open navigation menu"
+                class="flex h-11 w-11 items-center justify-center rounded-full hover:bg-on-primary/10">
+          <i data-lucide="menu" class="h-5 w-5"></i>
+        </button>
+      </div>
     </div>
     <?php endif; ?>
     <main class="<?= $loggedIn ? 'min-h-screen px-5 pb-24 pt-20 md:px-10 md:pb-10 md:pt-10' : 'min-h-screen px-5 py-6 md:px-10 md:py-10' ?>">

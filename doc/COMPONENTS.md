@@ -197,3 +197,32 @@ Copy pattern: state what's missing in plain terms, then offer the one action tha
 </button>
 ```
 Implementation of `$store.theme` is specified in `TECH_SPEC.md` §5 — do not reimplement theme logic per-page.
+
+---
+
+## Notification Indicator
+
+Use a Bell icon link with a semantic error badge. Hide the badge when unread
+count is zero; cap visible text at `99`.
+
+```html
+<a href="notifications.php" aria-label="Notifications — 3 unread"
+   class="relative flex h-11 w-11 items-center justify-center rounded-full hover:bg-on-primary/10">
+  <i data-lucide="bell" class="h-5 w-5"></i>
+  <span class="absolute right-1 top-1 inline-flex min-h-4 min-w-4 items-center justify-center rounded-full bg-error px-1 font-display text-[10px] leading-4 font-semibold text-on-error">3</span>
+</a>
+```
+
+## Notification Row
+
+Unread rows use `border-primary bg-primary-container/30`; read rows use
+`border-outline-variant bg-surface-lowest`. The whole row is a 44px-minimum
+button that posts `action=open`, marks the row read, and follows its validated
+local action URL.
+
+## Push Permission Card
+
+Use a Standard Card with `bell-ring` in a primary-container icon tile, status
+copy, and one Primary Button whose label toggles between **Enable
+notifications** and **Disable notifications**. Permission requests must only
+run from that button click—never from page load.
