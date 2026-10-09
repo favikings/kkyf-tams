@@ -13,6 +13,8 @@ Legend: 🟢 all authenticated · 🔒 super_admin only · 📣 public
 |---|---|---|---|
 | `index.php` | 📣 | Front controller — redirects to `dashboard.php` or `login.php` | none |
 | `login.php` | 📣 | Guest only; redirects to dashboard if already logged in | none |
+| `forgot-password.php` | 📣 | Requests a reset link; always returns the same generic confirmation | none |
+| `reset-password.php` | 📣 | Validates a single-use, expiring reset token and accepts a new password | none |
 | `register.php` | 📣 | Tent-admin self-registration; **blocked if zero tents exist** | none |
 | `logout.php` | 🟢 | Destroys session, redirects to login | none (POST/GET) |
 | `dashboard.php` | 🟢 | Super: all tents. Tent: own tent only | `requireLogin();` |
@@ -64,7 +66,7 @@ Every read/`UPDATE`/`DELETE`(soft) that touches `members`, `attendance`, or `fir
 
 ## 5. Public-vs-private guard rules
 
-- **Public only:** `index.php`, `login.php`, `register.php`, `logout.php`, static assets. Everything else requires a guard.
+- **Public only:** `index.php`, `login.php`, `forgot-password.php`, `reset-password.php`, `register.php`, `logout.php`, static assets. Everything else requires a guard.
 - A protected page's first executable lines after `include`s are **exactly**:
   ```php
   requireLogin();                 // or requireSuperAdmin() for super-only pages

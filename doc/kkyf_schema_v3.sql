@@ -34,6 +34,7 @@ CREATE TABLE IF NOT EXISTS users (
     email          VARCHAR(150) NOT NULL UNIQUE,
     phone          VARCHAR(20)  NOT NULL,
     password_hash  VARCHAR(255) NOT NULL,
+    auth_version   INT UNSIGNED NOT NULL DEFAULT 1,
     role           ENUM('super_admin','tent_admin') NOT NULL,
     tent_id        INT UNSIGNED NULL,               -- NULL for super_admin
     status         ENUM('pending','approved','rejected') NOT NULL DEFAULT 'pending',
@@ -50,6 +51,34 @@ CREATE TABLE IF NOT EXISTS users (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 -- NOTE: role='super_admin' is not unique/limited — the app supports multiple
 -- Super Admin rows simultaneously. tent_id is set to NULL on promotion.
+
+-- ---------------------------------------------------------------------
+-- password_resets — hashed, expiring, single-use password reset links
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS password_resets (
+    id           BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id      INT UNSIGNED NOT NULL,
+    token_hash   CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    request_ip   VARCHAR(45) NOT NULL,
+    expires_at   DATETIME NOT NULL,
+    used_at      DATETIME NULL,
+    created_at   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_password_resets_token_hash (token_hash),
+    INDEX idx_password_resets_user_state (user_id, used_at, expires_at),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ---------------------------------------------------------------------
+-- password_reset_attempts — rate-limit ledger; raw emails are not stored
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS password_reset_attempts (
+    id           BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    email_hash   CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    request_ip   VARCHAR(45) NOT NULL,
+    created_at   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_password_reset_attempts_email_time (email_hash, created_at),
+    INDEX idx_password_reset_attempts_ip_time (request_ip, created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ---------------------------------------------------------------------
 -- members

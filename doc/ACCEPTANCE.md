@@ -121,3 +121,17 @@ Every `public/*.php` file that touches member/attendance/follow-up data must pas
 - [x] Birthdays This Week (md:col-span-2): runs for both roles (super = all tents), next-7-days window; date badge (44px `bg-surface-container-low`, month label-sm + day title-md) + name; no "Turning {age}" (no birth year stored); full-width Secondary Button "Send Greetings" rendered disabled (opacity-50, pointer-events-none, no handler) — Phase-2 placeholder.
 - [x] Light + dark both render clearly — hero overlay/text tokens flip with the theme store; verified token-only classes (no raw hex / palette colors).
 - [x] Only `dashboard.php` changed; auth, routing, checkin.php, members.php untouched.
+
+## STEP 19 — Forgot Password
+
+- [x] `003_password_reset.sql` adds `password_resets`, `password_reset_attempts`, and `users.auth_version` without seed rows; migration is re-runnable and applied to the development database.
+- [x] `forgot-password.php` is public, CSRF-protected, uses one generic response for unknown/ineligible/throttled/eligible addresses, and issues mail only for approved active users.
+- [x] Reset verifiers are 32 random bytes, only SHA-256 hashes are stored, tokens expire after 30 minutes, and issuing a replacement invalidates older unused tokens.
+- [x] Throttling suppresses issuance after 3 requests per email hash or 10 requests per IP in 60 minutes without changing the public response.
+- [x] `reset-password.php` sends `Referrer-Policy: no-referrer`, treats invalid/expired/used tokens identically, checks CSRF, requires matching passwords of at least 8 characters, and never auto-logs-in.
+- [x] Password update + `auth_version` increment + token consumption/revocation are one transaction; a consumed token cannot be replayed.
+- [x] Existing sessions become invalid after reset; inactive, pending, and rejected accounts remain unable to authenticate or receive reset mail.
+- [x] `sendMail()` is the only mail entry point; `log` transport is debug-only and `smtp` uses authenticated TLS through the approved PHPMailer dependency. No secrets or raw tokens are committed or logged in production.
+- [x] Reset and password-changed emails use trusted `APP_URL`; no reset URL is built from the request Host header.
+- [x] Both pages follow the auth-page visual language, semantic tokens, dark mode, and COMPONENTS.md recipes at mobile and desktop widths.
+- [x] Tests cover generic responses, eligibility, both rate limits, expiry, replay, password mismatch/length, session invalidation, mail transport safety, PDO prepared statements, and `php -l` on every touched PHP file.

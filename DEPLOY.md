@@ -1,12 +1,13 @@
 # KKYF Membership Portal — Deployment (cPanel)
 
-Short runbook for getting the portal live on shared cPanel hosting (PHP 8+, MySQL 8). No build step — upload-and-go.
+Short runbook for getting the portal live on shared cPanel hosting (PHP 8.2+, MySQL 8). There is no frontend build; the deploy workflow installs the one approved Composer dependency before its upload-and-go FTP sync.
 
 ## 1. Prepare the database
 
 1. In cPanel → **MySQL® Databases**, create an empty database (e.g. `kkyf_portal`) and a MySQL user, grant it **All Privileges** on that database.
 2. In **phpMyAdmin**, select the new database and run `migrations/001_schema.sql` (Import → choose file → Go). This creates all tables, **zero seed rows**.
    - Also run `migrations/002_members_phone_nullable.sql` right after (makes `members.phone` optional; the app treats phone as optional).
+   - Then run `migrations/003_password_reset.sql` (adds password-reset tokens, request throttling, and session-version invalidation). It is safe to run more than once.
 
 ## 2. Upload the files
 
@@ -37,7 +38,7 @@ kkyftams/            <- FTP account's home dir; also the app's public URL path
   public/             <- served transparently at kkyfglobal.org/kkyftams/ via the root .htaccess rewrite
 ```
 
-The root `.htaccess` (repo root, deployed to `kkyftams/.htaccess`) is what makes this work — it rewrites any request that isn't already under `public/` into `public/`, without changing the browser's URL, and denies `app/`, `migrations/`, `scripts/`, `.env` outright. `.github/workflows/deploy.yml` just does a single `server-dir: /` sync of the whole repo — no special per-folder handling needed. Layout A is what you'd get by additionally repointing a domain's document root at `public/`, which isn't possible for a plain subfolder of an existing domain.
+The root `.htaccess` (repo root, deployed to `kkyftams/.htaccess`) is what makes this work — it rewrites any request that isn't already under `public/` into `public/`, without changing the browser's URL, and denies `app/`, `migrations/`, `scripts/`, `vendor/`, `.env`, and the Composer manifests outright. `.github/workflows/deploy.yml` installs locked production Composer dependencies and then does a single `server-dir: /` sync of the whole repo — no special per-folder handling needed. Layout A is what you'd get by additionally repointing a domain's document root at `public/`, which isn't possible for a plain subfolder of an existing domain.
 
 ## 3. Set .env on the server
 
@@ -53,7 +54,26 @@ APP_NAME=KKYF Membership Portal
 APP_URL=https://yourdomain.com
 TIMEZONE=Africa/Lagos
 APP_DEBUG=false          # true only for local dev; false hides errors in production
+
+MAIL_TRANSPORT=smtp
+MAIL_FROM_ADDRESS=no-reply@yourdomain.com
+MAIL_FROM_NAME="KKYF Membership Portal"
+SMTP_HOST=mail.yourdomain.com
+SMTP_PORT=587
+SMTP_USERNAME=no-reply@yourdomain.com
+SMTP_PASSWORD=<smtp_password>
+SMTP_ENCRYPTION=tls      # tls/587 or ssl/465, as supplied by your mail host
 ```
+
+Use a real mailbox or transactional SMTP account whose credentials match the
+host/port/encryption settings. Never copy production SMTP secrets into either
+example file or GitHub. `MAIL_TRANSPORT=log` is permitted only with
+`APP_DEBUG=true` for local development; production rejects it deliberately.
+
+The GitHub deploy workflow runs `composer install --no-dev` before FTP sync, so
+`vendor/` and PHPMailer are uploaded automatically even though `vendor/` is
+gitignored. For a manual upload, run the same Composer command locally first and
+upload the generated `vendor/` directory with the application.
 
 Keep `.env` out of the web root (it already is — it lives one level above `public/`).
 

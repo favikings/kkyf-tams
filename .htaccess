@@ -10,8 +10,9 @@
 
 RewriteEngine On
 
-RewriteRule ^(app|migrations|scripts)/ - [F,L]
-RewriteRule ^\.env$ - [F,L]
+RewriteRule ^(app|migrations|scripts|vendor)/ - [F,L]
+RewriteRule ^\.env(?:\..*)?$ - [F,L]
+RewriteRule ^composer\.(json|lock)$ - [F,L]
 
 RewriteCond %{REQUEST_URI} !/public/
 RewriteRule ^(.*)$ public/$1 [L]

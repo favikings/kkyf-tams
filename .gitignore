@@ -17,3 +17,6 @@ backups/
 
 # Logs
 *.log
+
+# Composer dependencies are installed locally and by the deploy workflow.
+/vendor/

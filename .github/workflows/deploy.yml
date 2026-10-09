@@ -13,11 +13,19 @@ jobs:
       - name: Get latest code
         uses: actions/checkout@v4
 
+      - name: Validate and install production PHP dependencies
+        run: |
+          composer validate --strict
+          composer install --no-dev --prefer-dist --no-interaction --no-progress --optimize-autoloader
+          composer audit --no-dev
+
       # kkyftams@kkyfglobal.org is chrooted to the kkyftams/ folder, which is
       # reached via kkyfglobal.org/kkyftams (a path under the parent domain's
       # own document root, not a docroot we can point at public/ ourselves).
       # So the repo is synced as-is (app/, public/, migrations/, scripts/ all
       # stay siblings, matching the codebase's own relative-path assumptions),
+      # Composer installs vendor/ in this workspace before the FTP sync, so
+      # PHPMailer is deployed even though vendor/ is not committed to git,
       # and the root .htaccess transparently routes requests into public/
       # while denying direct access to app/, migrations/, scripts/, .env.
       - name: Sync files

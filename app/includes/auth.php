@@ -12,26 +12,76 @@ require_once __DIR__ . '/functions.php';
 
 /**
  * Returns the currently logged-in user as ['id','name','email','role','tent_id'],
- * or null when no one is logged in.
+ * or null when no one is logged in. The stored auth_version and account state
+ * are checked once per request so a password reset can revoke old sessions.
  */
 function currentUser(): ?array
 {
+    if (array_key_exists('kkyf_current_user', $GLOBALS)) {
+        $cached = $GLOBALS['kkyf_current_user'];
+
+        return is_array($cached) ? $cached : null;
+    }
+
     $user = $_SESSION['user'] ?? null;
     if (!is_array($user)) {
+        $GLOBALS['kkyf_current_user'] = null;
+
         return null;
     }
 
-    $tentId = isset($user['tent_id']) && $user['tent_id'] !== null
-        ? (int) $user['tent_id']
-        : null;
+    $userId = (int) ($user['id'] ?? 0);
+    $sessionAuthVersion = (int) ($user['auth_version'] ?? 0);
+    if ($userId < 1 || $sessionAuthVersion < 1) {
+        invalidateAuthenticatedSession();
 
-    return [
-        'id' => (int) ($user['id'] ?? 0),
-        'name' => (string) ($user['name'] ?? ''),
-        'email' => (string) ($user['email'] ?? ''),
-        'role' => (string) ($user['role'] ?? ''),
+        return null;
+    }
+
+    $statement = db()->prepare(
+        'SELECT id, name, email, role, tent_id, auth_version, status, is_active
+         FROM users
+         WHERE id = ?'
+    );
+    $statement->execute([$userId]);
+    $databaseUser = $statement->fetch();
+
+    if (
+        $databaseUser === false
+        || $databaseUser['status'] !== 'approved'
+        || (int) $databaseUser['is_active'] !== 1
+        || (int) $databaseUser['auth_version'] !== $sessionAuthVersion
+    ) {
+        invalidateAuthenticatedSession();
+
+        return null;
+    }
+
+    $tentId = $databaseUser['tent_id'] !== null ? (int) $databaseUser['tent_id'] : null;
+
+    $current = [
+        'id' => (int) $databaseUser['id'],
+        'name' => (string) $databaseUser['name'],
+        'email' => (string) $databaseUser['email'],
+        'role' => (string) $databaseUser['role'],
         'tent_id' => $tentId,
     ];
+    $GLOBALS['kkyf_current_user'] = $current;
+
+    return $current;
+}
+
+/**
+ * Removes authenticated state while keeping the PHP session active so a public
+ * page can immediately issue a fresh CSRF token.
+ */
+function invalidateAuthenticatedSession(): void
+{
+    unset($_SESSION['user'], $_SESSION['_csrf']);
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        session_regenerate_id(true);
+    }
+    $GLOBALS['kkyf_current_user'] = null;
 }
 
 function isLoggedIn(): bool
@@ -99,6 +149,14 @@ function login(array $userRow): void
         'email' => (string) $userRow['email'],
         'role' => (string) $userRow['role'],
         'tent_id' => $userRow['tent_id'] !== null ? (int) $userRow['tent_id'] : null,
+        'auth_version' => (int) ($userRow['auth_version'] ?? 1),
+    ];
+    $GLOBALS['kkyf_current_user'] = [
+        'id' => (int) $userRow['id'],
+        'name' => (string) $userRow['name'],
+        'email' => (string) $userRow['email'],
+        'role' => (string) $userRow['role'],
+        'tent_id' => $userRow['tent_id'] !== null ? (int) $userRow['tent_id'] : null,
     ];
 }
 
@@ -107,6 +165,7 @@ function login(array $userRow): void
  */
 function logout(): void
 {
+    $GLOBALS['kkyf_current_user'] = null;
     $_SESSION = [];
 
     if (ini_get('session.use_cookies')) {

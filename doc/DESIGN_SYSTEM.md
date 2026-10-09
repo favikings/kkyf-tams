@@ -161,6 +161,7 @@ tailwind.config = {
         'surface-bright': 'rgb(var(--color-surface-bright) / <alpha-value>)',
         'surface-lowest': 'rgb(var(--color-surface-container-lowest) / <alpha-value>)',
         'surface-low': 'rgb(var(--color-surface-container-low) / <alpha-value>)',
+        'surface-container-low': 'rgb(var(--color-surface-container-low) / <alpha-value>)',
         'surface-container': 'rgb(var(--color-surface-container) / <alpha-value>)',
         'surface-high': 'rgb(var(--color-surface-container-high) / <alpha-value>)',
         'surface-highest': 'rgb(var(--color-surface-container-highest) / <alpha-value>)',

@@ -183,4 +183,7 @@ Every member/attendance/follow-up row written must belong to the effective `tent
 
 - **Manual "Add Member"** from `members.php` is **not** an API call — it posts to `member-edit.php` (add mode), see `PAGES_AND_ROLES.md`.
 - **Member notes** add is a normal form POST to `member-view.php`, not an API endpoint.
+- **Forgot Password** request/reset actions are CSRF-protected normal form POSTs to
+  `forgot-password.php` and `reset-password.php`; their security contract is
+  `TECH_SPEC.md §10`, not a JSON endpoint.
 - Offline sync / service worker endpoints are **Phase 2** — do not build.

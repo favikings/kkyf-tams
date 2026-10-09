@@ -27,10 +27,14 @@ kkyf-portal/
       app.php                <- session start, timezone, constants
     includes/
       auth.php               <- everything in TECH_SPEC §3
+      password-reset.php     <- token lifecycle, throttling, reset transaction
+      mailer.php             <- log/SMTP transport gateway
       functions.php          <- date helpers, formatters, e(), redirect()
       header.php / footer.php
-  migrations/001_schema.sql
+  migrations/001_schema.sql, 002_members_phone_nullable.sql,
+             003_password_reset.sql
   scripts/create-super-admin.php
+  composer.json / composer.lock <- approved PHPMailer dependency (R-38)
   .env.example
 ```
 
@@ -210,3 +214,65 @@ Centralize this as one `validateMember(array $input): array` function (returns `
 - No jQuery, no separate JS framework — Alpine.js only.
 - No full-page reloads for check-in taps, follow-up status changes, or modal-driven actions — those are API + fetch.
 - No hardcoded tent list or tent count anywhere in code (including dropdowns, validation, or comments implying "10 tents") — always query the `tents` table.
+
+---
+
+## 10. Password Recovery Contract
+
+Password recovery is a public, email-link flow implemented by `forgot-password.php`
+and `reset-password.php`. It is not an API endpoint and never logs a user in
+automatically.
+
+### 10.1 Request flow
+
+- Every POST calls `verifyCsrf()` before doing any work.
+- Normalize the submitted email exactly as login does (`strtolower(trim(...))`).
+- Always redirect to the same confirmation state with the same message, whether the
+  address is unknown, ineligible, throttled, or accepted: **"If an eligible account
+  exists for that email, a password reset link has been sent."**
+- Only `status = 'approved' AND is_active = 1` users receive a reset email. The public
+  response never reveals that eligibility result.
+- Record every request in `password_reset_attempts` using a SHA-256 email hash rather
+  than the raw submitted address. Silently suppress issuance after 3 requests for the
+  same email hash or 10 requests from the same IP in a rolling 60-minute window.
+- Generate the verifier with `bin2hex(random_bytes(32))`. Email the raw verifier once;
+  persist only `hash('sha256', $token)` in `password_resets`.
+- Before inserting a new token, mark every unused token for that user as used. A token
+  expires 30 minutes after creation and is single-use.
+- Build reset URLs from trusted `APP_URL`; never derive their origin from the request
+  `Host` header.
+
+### 10.2 Reset flow
+
+- Send `Referrer-Policy: no-referrer` on the reset page.
+- Hash the query-string token with SHA-256 and fetch an unused, unexpired row by its
+  hash using a PDO prepared statement. Invalid, expired, and used tokens render the
+  same branded invalid-link state.
+- Require password + confirmation, with the existing minimum of 8 characters.
+- On success, one transaction updates `users.password_hash` with
+  `password_hash(..., PASSWORD_BCRYPT)`, increments `users.auth_version`, marks the
+  presented token used, and marks every other unused token for that user used.
+- Do not auto-login. Redirect to `login.php` with a success flash and send a separate
+  password-changed notification that contains no password or reset token.
+
+### 10.3 Session invalidation
+
+`users.auth_version` starts at `1`. `login()` stores that version in the session while
+keeping the public `currentUser()` return shape unchanged. `currentUser()` validates
+the stored version plus `status = 'approved'` and `is_active = 1` against the database
+once per request. A mismatch clears the session, so incrementing `auth_version` during
+reset invalidates every previously authenticated session for that account.
+
+### 10.4 Mail transport
+
+All reset mail goes through `sendMail()` in `app/includes/mailer.php`; pages never call
+`mail()` or an SMTP library directly. Supported transports are:
+
+- `log`: local development only and rejected unless `APP_DEBUG=true`; writes protected
+  mail previews below `app/storage/logs/`.
+- `smtp`: production transport using PHPMailer with authenticated SMTP and TLS. PHPMailer
+  is the one approved Composer dependency for this feature (DECISIONS R-38).
+
+Required environment keys are `MAIL_TRANSPORT`, `MAIL_FROM_ADDRESS`,
+`MAIL_FROM_NAME`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, and
+`SMTP_ENCRYPTION`. Secrets stay in `.env`; `.env.example` contains placeholders only.
